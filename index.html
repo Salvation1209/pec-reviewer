@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -358,6 +358,82 @@
     .cs-row { grid-template-columns: 180px 1fr; }
   }
 
+  /* ─── ADHD BUTTON ─── */
+  .adhd-btn {
+    background: linear-gradient(135deg, #f7a26a, #f7716a) !important;
+    color: #fff !important;
+    font-weight: 700 !important;
+    border: none !important;
+    animation: adhdPulse 2.5s ease-in-out infinite;
+  }
+  .adhd-btn.on {
+    background: linear-gradient(135deg, #4fd1a1, #7c6af7) !important;
+    animation: none;
+  }
+  @keyframes adhdPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(247,162,106,0); }
+    50% { box-shadow: 0 0 0 6px rgba(247,162,106,.25); }
+  }
+
+  /* ─── ADHD FLOATING PANEL ─── */
+  .adhd-panel {
+    position: fixed;
+    bottom: 80px;
+    right: 16px;
+    width: 300px;
+    background: #0a0a10;
+    border: 1px solid rgba(247,162,106,.4);
+    border-radius: 14px;
+    overflow: hidden;
+    z-index: 999;
+    box-shadow: 0 8px 32px rgba(0,0,0,.6), 0 0 0 1px rgba(247,162,106,.15);
+    resize: none;
+    user-select: none;
+    transition: width .2s, height .2s;
+  }
+  .adhd-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: .45rem .75rem;
+    background: rgba(247,162,106,.12);
+    border-bottom: 1px solid rgba(247,162,106,.2);
+    cursor: grab;
+    touch-action: none;
+  }
+  .adhd-header:active { cursor: grabbing; }
+  .adhd-label {
+    font-family: 'DM Mono', monospace;
+    font-size: .68rem; letter-spacing: .06em;
+    color: var(--accent2); font-weight: 600;
+  }
+  .adhd-controls { display: flex; gap: .35rem; }
+  .adhd-ctrl {
+    padding: .2rem .45rem; border-radius: 5px; border: 1px solid rgba(247,162,106,.25);
+    background: rgba(247,162,106,.1); color: var(--accent2);
+    font-size: .7rem; cursor: pointer; line-height: 1;
+    transition: background .15s;
+  }
+  .adhd-ctrl:hover { background: rgba(247,162,106,.25); }
+  #adhdCanvas {
+    display: block;
+    width: 100%;
+    background: #1a1a2e;
+    cursor: pointer;
+  }
+  .adhd-drag-hint {
+    font-family: 'DM Mono', monospace;
+    font-size: .58rem; color: rgba(136,136,168,.4);
+    text-align: center; padding: .25rem 0;
+    letter-spacing: .06em;
+  }
+
+  /* Panel size */
+  @media (min-width: 641px) {
+    .adhd-panel { width: 320px; bottom: 24px; right: 24px; }
+  }
+  @media (max-width: 640px) {
+    .bottom-nav-inner { grid-template-columns: repeat(5, 1fr); }
+    .adhd-panel { width: calc(100vw - 24px); right: 12px; bottom: 76px; }
+  }
 </style>
 </head>
 <body>
@@ -369,8 +445,21 @@
     <button class="nav-tab" onclick="show('quiz',this)">🎯 Quiz</button>
     <button class="nav-tab" onclick="show('flashcards',this)">🃏 Flashcards</button>
     <button class="nav-tab" onclick="show('cheatsheet',this)">📋 Cheat Sheet</button>
+    <button class="nav-tab adhd-btn" onclick="toggleADHD()" id="adhdBtn" title="ADHD Mode">🛹 ADHD Mode</button>
   </div>
 </nav>
+
+<!-- ADHD floating panel — built-in endless runner -->
+<div id="adhdPanel" class="adhd-panel" style="display:none;">
+  <div class="adhd-header" id="adhdHeader">
+    <span class="adhd-label">🛹 Subway Surfers</span>
+    <div class="adhd-controls">
+      <button class="adhd-ctrl" onclick="toggleADHD()" title="Close">✕</button>
+    </div>
+  </div>
+  <canvas id="adhdCanvas"></canvas>
+  <div class="adhd-drag-hint">drag header to move · tap/↑/space to jump · swipe left/right to dodge</div>
+</div>
 
 <!-- Mobile bottom navigation -->
 <div class="bottom-nav">
@@ -386,6 +475,9 @@
     </button>
     <button class="bn-tab" id="bn-cheatsheet" onclick="show('cheatsheet',this,'bn')">
       <span class="bn-icon">📋</span>Cheat Sheet
+    </button>
+    <button class="bn-tab" onclick="toggleADHD()">
+      <span class="bn-icon">🛹</span>ADHD
     </button>
   </div>
 </div>
@@ -1158,6 +1250,308 @@ function buildCheatSheet() {
       <div class="cs-row"><div class="cs-key highlight">L10</div><div class="cs-val">Video game labor is globally exploitative; Zeebo proved the 'right to play'; cultural imperialism = spread of commercial model; Filipino laro ng lahi declining.</div></div>
     </div>
   </div>`;
+}
+
+// ======================================================
+// ADHD MODE - built-in mini runner (no external embed)
+// ======================================================
+let adhdOn = false;
+let adhdGame = null;
+
+function toggleADHD() {
+  const panel = document.getElementById('adhdPanel');
+  const btn = document.getElementById('adhdBtn');
+
+  adhdOn = !adhdOn;
+
+  if (adhdOn) {
+    panel.style.display = 'block';
+    panel.style.opacity = '0';
+    panel.style.transform = 'scale(0.85) translateY(20px)';
+    requestAnimationFrame(() => {
+      panel.style.transition = 'opacity .25s, transform .25s';
+      panel.style.opacity = '1';
+      panel.style.transform = 'scale(1) translateY(0)';
+    });
+    if (btn) btn.classList.add('on');
+    startADHDGame();
+  } else {
+    stopADHDGame();
+    panel.style.opacity = '0';
+    panel.style.transform = 'scale(0.85) translateY(20px)';
+    setTimeout(() => { panel.style.display = 'none'; }, 230);
+    if (btn) btn.classList.remove('on');
+  }
+}
+
+function startADHDGame() {
+  const canvas = document.getElementById('adhdCanvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+
+  if (adhdGame && adhdGame.raf) cancelAnimationFrame(adhdGame.raf);
+
+  const game = adhdGame = {
+    ctx,
+    canvas,
+    w: 320,
+    h: 230,
+    lane: 1,
+    targetLane: 1,
+    y: 0,
+    vy: 0,
+    speed: 3.1,
+    distance: 0,
+    score: 0,
+    best: Number(localStorage.getItem('adhdBest') || 0),
+    obstacles: [],
+    coins: [],
+    spawnTimer: 0,
+    coinTimer: 20,
+    running: true,
+    last: performance.now(),
+    startX: null,
+    startY: null
+  };
+
+  function resizeCanvas() {
+    const cssW = canvas.clientWidth || 320;
+    const cssH = Math.max(220, Math.round(cssW * 0.72));
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width = Math.round(cssW * dpr);
+    canvas.height = Math.round(cssH * dpr);
+    canvas.style.height = cssH + 'px';
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    game.w = cssW;
+    game.h = cssH;
+  }
+
+  function laneX(lane) {
+    const roadW = game.w * 0.72;
+    const left = (game.w - roadW) / 2;
+    return left + roadW * (lane + 0.5) / 3;
+  }
+
+  function jump() {
+    if (game.y === 0) game.vy = 12;
+  }
+
+  function moveLane(delta) {
+    game.targetLane = Math.max(0, Math.min(2, game.targetLane + delta));
+  }
+
+  function resetGame() {
+    game.lane = 1;
+    game.targetLane = 1;
+    game.y = 0;
+    game.vy = 0;
+    game.speed = 3.1;
+    game.distance = 0;
+    game.score = 0;
+    game.obstacles = [];
+    game.coins = [];
+    game.spawnTimer = 0;
+    game.coinTimer = 20;
+    game.running = true;
+    game.last = performance.now();
+  }
+
+  function keyHandler(e) {
+    if (!adhdOn) return;
+    if (['ArrowUp', ' ', 'w', 'W'].includes(e.key)) { e.preventDefault(); game.running ? jump() : resetGame(); }
+    if (['ArrowLeft', 'a', 'A'].includes(e.key)) { e.preventDefault(); moveLane(-1); }
+    if (['ArrowRight', 'd', 'D'].includes(e.key)) { e.preventDefault(); moveLane(1); }
+  }
+
+  function pointerDown(e) {
+    const p = e.touches ? e.touches[0] : e;
+    game.startX = p.clientX;
+    game.startY = p.clientY;
+    if (!game.running) resetGame();
+  }
+
+  function pointerUp(e) {
+    if (game.startX === null || game.startY === null) return;
+    const p = e.changedTouches ? e.changedTouches[0] : e;
+    const dx = p.clientX - game.startX;
+    const dy = p.clientY - game.startY;
+    if (Math.abs(dx) > 34 && Math.abs(dx) > Math.abs(dy)) moveLane(dx > 0 ? 1 : -1);
+    else jump();
+    game.startX = null;
+    game.startY = null;
+  }
+
+  function drawRunner(x, baseY) {
+    ctx.save();
+    ctx.translate(x, baseY - game.y);
+    ctx.fillStyle = '#4fd1a1';
+    ctx.fillRect(-12, -34, 24, 26);
+    ctx.fillStyle = '#f7d7a6';
+    ctx.beginPath(); ctx.arc(0, -43, 10, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = '#7c6af7';
+    ctx.lineWidth = 4;
+    const step = Math.sin(game.distance * 0.18) * 5;
+    ctx.beginPath(); ctx.moveTo(-6, -10); ctx.lineTo(-16, 10 + step); ctx.moveTo(6, -10); ctx.lineTo(16, 10 - step); ctx.stroke();
+    ctx.strokeStyle = '#f7a26a';
+    ctx.beginPath(); ctx.moveTo(-10, -27); ctx.lineTo(-22, -16 - step); ctx.moveTo(10, -27); ctx.lineTo(22, -16 + step); ctx.stroke();
+    ctx.restore();
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, game.w, game.h);
+    const sky = ctx.createLinearGradient(0, 0, 0, game.h);
+    sky.addColorStop(0, '#151529');
+    sky.addColorStop(1, '#26263a');
+    ctx.fillStyle = sky;
+    ctx.fillRect(0, 0, game.w, game.h);
+
+    const roadW = game.w * 0.72;
+    const left = (game.w - roadW) / 2;
+    const roadTop = game.h * 0.08;
+    ctx.fillStyle = '#2b2b3f';
+    ctx.beginPath();
+    ctx.moveTo(left + roadW * 0.2, roadTop);
+    ctx.lineTo(left + roadW * 0.8, roadTop);
+    ctx.lineTo(left + roadW, game.h);
+    ctx.lineTo(left, game.h);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.strokeStyle = 'rgba(255,255,255,.22)';
+    ctx.lineWidth = 2;
+    for (let i = 1; i < 3; i++) {
+      const x = left + roadW * i / 3;
+      ctx.setLineDash([12, 14]);
+      ctx.beginPath(); ctx.moveTo(x, roadTop); ctx.lineTo(x, game.h); ctx.stroke();
+    }
+    ctx.setLineDash([]);
+
+    game.coins.forEach(c => {
+      const scale = 0.45 + c.z * 0.65;
+      ctx.fillStyle = '#ffd56a';
+      ctx.beginPath(); ctx.arc(laneX(c.lane), c.y, 8 * scale, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = '#f7a26a'; ctx.stroke();
+    });
+
+    game.obstacles.forEach(o => {
+      const scale = 0.5 + o.z * 0.7;
+      const x = laneX(o.lane);
+      const w = 28 * scale;
+      const h = 24 * scale;
+      ctx.fillStyle = '#f7716a';
+      ctx.fillRect(x - w / 2, o.y - h, w, h);
+      ctx.fillStyle = '#ffb3aa';
+      ctx.fillRect(x - w / 2 + 4, o.y - h + 5, w - 8, 5);
+    });
+
+    const runnerX = laneX(game.lane);
+    drawRunner(runnerX, game.h - 24);
+
+    ctx.fillStyle = 'rgba(10,10,16,.68)';
+    ctx.fillRect(8, 8, 132, 42);
+    ctx.fillStyle = '#e8e8f0';
+    ctx.font = '600 13px Space Grotesk, sans-serif';
+    ctx.fillText('Score ' + game.score, 18, 26);
+    ctx.fillStyle = '#8888a8';
+    ctx.font = '11px DM Mono, monospace';
+    ctx.fillText('Best ' + game.best, 18, 42);
+
+    if (!game.running) {
+      ctx.fillStyle = 'rgba(10,10,16,.78)';
+      ctx.fillRect(0, 0, game.w, game.h);
+      ctx.fillStyle = '#fff';
+      ctx.font = '700 20px Space Grotesk, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('bonk. tap to retry', game.w / 2, game.h / 2 - 8);
+      ctx.fillStyle = '#f7a26a';
+      ctx.font = '12px DM Mono, monospace';
+      ctx.fillText('finals brain break mode', game.w / 2, game.h / 2 + 14);
+      ctx.textAlign = 'left';
+    }
+  }
+
+  function update(now) {
+    const dt = Math.min(32, now - game.last) / 16.67;
+    game.last = now;
+
+    if (game.running) {
+      game.distance += game.speed * dt;
+      game.speed = Math.min(6.5, game.speed + 0.0015 * dt);
+      game.lane += (game.targetLane - game.lane) * 0.25;
+
+      if (game.y > 0 || game.vy > 0) {
+        game.y += game.vy * dt;
+        game.vy -= 0.72 * dt;
+        if (game.y < 0) { game.y = 0; game.vy = 0; }
+      }
+
+      game.spawnTimer -= dt;
+      if (game.spawnTimer <= 0) {
+        game.obstacles.push({ lane: Math.floor(Math.random() * 3), y: -18, z: 0 });
+        game.spawnTimer = 45 + Math.random() * 45;
+      }
+
+      game.coinTimer -= dt;
+      if (game.coinTimer <= 0) {
+        game.coins.push({ lane: Math.floor(Math.random() * 3), y: -12, z: 0 });
+        game.coinTimer = 18 + Math.random() * 26;
+      }
+
+      game.obstacles.forEach(o => { o.y += game.speed * 1.45 * dt; o.z = Math.min(1, o.y / game.h); });
+      game.coins.forEach(c => { c.y += game.speed * 1.35 * dt; c.z = Math.min(1, c.y / game.h); });
+
+      const runnerLane = Math.round(game.targetLane);
+      const hitY = game.h - 34;
+      game.obstacles = game.obstacles.filter(o => {
+        const passed = o.y > game.h + 30;
+        const sameLane = o.lane === runnerLane;
+        const close = Math.abs(o.y - hitY) < 26;
+        if (sameLane && close && game.y < 24) {
+          game.running = false;
+          game.best = Math.max(game.best, game.score);
+          localStorage.setItem('adhdBest', String(game.best));
+        }
+        return !passed;
+      });
+
+      game.coins = game.coins.filter(c => {
+        const got = c.lane === runnerLane && Math.abs(c.y - (game.h - 42)) < 30;
+        if (got) game.score += 10;
+        return !got && c.y < game.h + 20;
+      });
+
+      game.score = Math.max(game.score, Math.floor(game.distance / 10));
+    }
+
+    draw();
+    game.raf = requestAnimationFrame(update);
+  }
+
+  resizeCanvas();
+  window.addEventListener('resize', resizeCanvas);
+  window.addEventListener('keydown', keyHandler);
+  canvas.addEventListener('pointerdown', pointerDown);
+  canvas.addEventListener('pointerup', pointerUp);
+  canvas.addEventListener('touchstart', pointerDown, { passive: true });
+  canvas.addEventListener('touchend', pointerUp, { passive: true });
+
+  game.cleanup = () => {
+    game.running = false;
+    cancelAnimationFrame(game.raf);
+    window.removeEventListener('resize', resizeCanvas);
+    window.removeEventListener('keydown', keyHandler);
+    canvas.removeEventListener('pointerdown', pointerDown);
+    canvas.removeEventListener('pointerup', pointerUp);
+    canvas.removeEventListener('touchstart', pointerDown);
+    canvas.removeEventListener('touchend', pointerUp);
+  };
+
+  game.raf = requestAnimationFrame(update);
+}
+
+function stopADHDGame() {
+  if (adhdGame && adhdGame.cleanup) adhdGame.cleanup();
+  adhdGame = null;
 }
 
 // ======================================================
