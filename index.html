@@ -414,29 +414,56 @@
   }
   .adhd-ctrl:hover { background: rgba(247,162,106,.25); }
   .adhd-video-wrap {
-    width: 100%; height: 400px;
+    width: 100%;
+    aspect-ratio: 16 / 9;
     background: #000;
     position: relative;
   }
-  .adhd-video-wrap.big { height: 520px; }
+  #adhdVideo {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    background: #000;
+  }
   .adhd-drag-hint {
     font-family: 'DM Mono', monospace;
-    font-size: .58rem; color: rgba(136,136,168,.4);
-    text-align: center; padding: .25rem 0;
+    font-size: .58rem; color: rgba(136,136,168,.48);
+    text-align: center; padding: .25rem 1.25rem .3rem .5rem;
     letter-spacing: .06em;
   }
+  .adhd-resize-handle {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    width: 28px;
+    height: 28px;
+    cursor: nwse-resize;
+    touch-action: none;
+    z-index: 2;
+  }
+  .adhd-resize-handle::after {
+    content: '';
+    position: absolute;
+    right: 8px;
+    bottom: 7px;
+    width: 12px;
+    height: 12px;
+    border-right: 2px solid rgba(247,162,106,.72);
+    border-bottom: 2px solid rgba(247,162,106,.72);
+  }
+  .adhd-panel.adhd-size-sm { width: min(300px, calc(100vw - 24px)); }
+  .adhd-panel.adhd-size-md { width: min(430px, calc(100vw - 24px)); }
+  .adhd-panel.adhd-size-lg { width: min(640px, calc(100vw - 24px)); }
 
-  /* Panel bigger on desktop */
+  /* Panel size */
   @media (min-width: 641px) {
-    .adhd-panel { width: 340px; bottom: 24px; right: 24px; }
-    .adhd-video-wrap { height: 420px; }
-    .adhd-video-wrap.big { height: 560px; }
+    .adhd-panel { bottom: 24px; right: 24px; }
   }
   @media (max-width: 640px) {
     .bottom-nav-inner { grid-template-columns: repeat(5, 1fr); }
-    .adhd-panel { width: calc(100vw - 24px); right: 12px; bottom: 76px; }
-    .adhd-video-wrap { height: 420px; }
-    .adhd-video-wrap.big { height: 560px; }
+    .adhd-panel { right: 12px; bottom: 76px; }
+    .adhd-ctrl { min-width: 34px; min-height: 30px; }
   }
 </style>
 </head>
@@ -454,7 +481,7 @@
 </nav>
 
 <!-- ADHD floating video panel -->
-<div id="adhdPanel" class="adhd-panel" style="display:none;">
+<div id="adhdPanel" class="adhd-panel adhd-size-md" style="display:none;">
   <div class="adhd-header">
     <span class="adhd-label">🛹 Minecraft Parkour</span>
     <div class="adhd-controls">
@@ -468,7 +495,8 @@
       Your browser cannot play this video.
     </video>
   </div>
-  <div class="adhd-drag-hint">hold &amp; drag to move · muted by default</div>
+  <div class="adhd-drag-hint">drag header to move · drag corner or tap ↗ to resize · muted</div>
+  <div class="adhd-resize-handle" id="adhdResizeHandle" title="Resize"></div>
 </div>
 
 <!-- Mobile bottom navigation -->
@@ -1266,7 +1294,29 @@ function buildCheatSheet() {
 // ADHD MODE - local muted video
 // ======================================================
 let adhdOn = false;
-let isPanelBig = false;
+let adhdSizeIndex = 1;
+const adhdSizeClasses = ['adhd-size-sm', 'adhd-size-md', 'adhd-size-lg'];
+
+function clampADHDPanel(panel) {
+  if (!panel) return;
+  const rect = panel.getBoundingClientRect();
+  const margin = 8;
+  if (rect.right > window.innerWidth - margin) panel.style.left = Math.max(margin, window.innerWidth - rect.width - margin) + 'px';
+  if (rect.bottom > window.innerHeight - margin) panel.style.top = Math.max(margin, window.innerHeight - rect.height - margin) + 'px';
+  if (rect.left < margin) panel.style.left = margin + 'px';
+  if (rect.top < margin) panel.style.top = margin + 'px';
+}
+
+function applyADHDSize(index) {
+  const panel = document.getElementById('adhdPanel');
+  const btn = document.getElementById('resizeBtn');
+  if (!panel) return;
+  panel.style.width = '';
+  panel.classList.remove(...adhdSizeClasses);
+  panel.classList.add(adhdSizeClasses[index]);
+  if (btn) btn.textContent = index === 2 ? '⤡' : '⤢';
+  requestAnimationFrame(() => clampADHDPanel(panel));
+}
 
 function toggleADHD() {
   const panel = document.getElementById('adhdPanel');
@@ -1277,6 +1327,7 @@ function toggleADHD() {
 
   if (adhdOn) {
     panel.style.display = 'block';
+    if (!panel.style.left && !panel.style.top) applyADHDSize(adhdSizeIndex);
     // keep autoplay browser-friendly
     if (video) {
       video.muted = true;
@@ -1289,6 +1340,7 @@ function toggleADHD() {
       panel.style.transition = 'opacity .25s, transform .25s';
       panel.style.opacity = '1';
       panel.style.transform = 'scale(1) translateY(0)';
+      clampADHDPanel(panel);
     });
     if (btn) btn.classList.add('on');
   } else {
@@ -1300,41 +1352,51 @@ function toggleADHD() {
     panel.style.transform = 'scale(0.85) translateY(20px)';
     setTimeout(() => { panel.style.display = 'none'; }, 230);
     if (btn) btn.classList.remove('on');
-    isPanelBig = false;
-    document.getElementById('adhdVideoWrap').classList.remove('big');
-    document.getElementById('resizeBtn').textContent = '⤢';
   }
 }
 
 function resizePanel() {
-  const wrap = document.getElementById('adhdVideoWrap');
-  const btn  = document.getElementById('resizeBtn');
-  isPanelBig = !isPanelBig;
-  wrap.classList.toggle('big', isPanelBig);
-  btn.textContent = isPanelBig ? '⤡' : '⤢';
+  adhdSizeIndex = (adhdSizeIndex + 1) % adhdSizeClasses.length;
+  applyADHDSize(adhdSizeIndex);
 }
 
-// ── Drag logic (mouse + touch) ──
+// Drag and resize logic (mouse + touch)
 (function() {
-  let dragging = false, startX, startY, origLeft, origTop;
+  let dragging = false, resizing = false, startX, startY, startWidth;
 
   function getPanel() { return document.getElementById('adhdPanel'); }
+  function pointFrom(e) { return e.touches ? e.touches[0] : e; }
 
   function onDown(e) {
-    // only drag from header
-    if (!e.target.closest('.adhd-header')) return;
     const panel = getPanel();
+    if (!panel) return;
+    const point = pointFrom(e);
+
+    if (e.target.closest('.adhd-resize-handle')) {
+      const rect = panel.getBoundingClientRect();
+      resizing = true;
+      panel.style.right = 'auto';
+      panel.style.bottom = 'auto';
+      panel.style.left = rect.left + 'px';
+      panel.style.top = rect.top + 'px';
+      panel.style.transition = 'none';
+      panel.classList.remove(...adhdSizeClasses);
+      startX = point.clientX;
+      startWidth = rect.width;
+      e.preventDefault();
+      return;
+    }
+
+    if (!e.target.closest('.adhd-header') || e.target.closest('.adhd-ctrl')) return;
     const rect = panel.getBoundingClientRect();
     dragging = true;
 
-    // Switch from right/bottom to left/top positioning for free movement
     panel.style.right  = 'auto';
     panel.style.bottom = 'auto';
     panel.style.left   = rect.left + 'px';
     panel.style.top    = rect.top  + 'px';
     panel.style.transition = 'none';
 
-    const point = e.touches ? e.touches[0] : e;
     startX = point.clientX - rect.left;
     startY = point.clientY - rect.top;
 
@@ -1342,13 +1404,24 @@ function resizePanel() {
   }
 
   function onMove(e) {
-    if (!dragging) return;
     const panel = getPanel();
-    const point = e.touches ? e.touches[0] : e;
+    if (!panel) return;
+    const point = pointFrom(e);
+
+    if (resizing) {
+      const rect = panel.getBoundingClientRect();
+      const maxWidth = Math.min(720, window.innerWidth - rect.left - 8);
+      const newWidth = Math.max(240, Math.min(maxWidth, startWidth + point.clientX - startX));
+      panel.style.width = newWidth + 'px';
+      clampADHDPanel(panel);
+      e.preventDefault();
+      return;
+    }
+
+    if (!dragging) return;
     let newLeft = point.clientX - startX;
     let newTop  = point.clientY - startY;
 
-    // clamp to viewport
     const pw = panel.offsetWidth, ph = panel.offsetHeight;
     newLeft = Math.max(0, Math.min(newLeft, window.innerWidth  - pw));
     newTop  = Math.max(0, Math.min(newTop,  window.innerHeight - ph));
@@ -1358,7 +1431,10 @@ function resizePanel() {
     e.preventDefault();
   }
 
-  function onUp() { dragging = false; }
+  function onUp() {
+    dragging = false;
+    resizing = false;
+  }
 
   document.addEventListener('mousedown',  onDown, { passive: false });
   document.addEventListener('mousemove',  onMove, { passive: false });
@@ -1366,6 +1442,7 @@ function resizePanel() {
   document.addEventListener('touchstart', onDown, { passive: false });
   document.addEventListener('touchmove',  onMove, { passive: false });
   document.addEventListener('touchend',   onUp);
+  window.addEventListener('resize', () => clampADHDPanel(getPanel()));
 })();
 
 // ======================================================
