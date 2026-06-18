@@ -1,0 +1,1170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PEC Finals Reviewer</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=DM+Mono:wght@400;500&family=Lora:ital,wght@0,400;0,600;1,400&display=swap');
+
+  :root {
+    --bg: #0f0f13;
+    --surface: #17171d;
+    --card: #1e1e27;
+    --border: #2e2e3e;
+    --accent: #7c6af7;
+    --accent2: #f7a26a;
+    --accent3: #4fd1a1;
+    --text: #e8e8f0;
+    --muted: #8888a8;
+    --correct: #4fd1a1;
+    --wrong: #f7716a;
+    --quiz-bg: #1a1a24;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Space Grotesk', sans-serif;
+    min-height: 100vh;
+    line-height: 1.6;
+  }
+
+  /* ─── TOP NAV (desktop) ─── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0;
+    background: rgba(15,15,19,0.96);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    z-index: 100;
+    padding: 0 1.5rem;
+    display: flex; align-items: center; justify-content: space-between;
+    height: 56px;
+  }
+  .nav-brand { font-family: 'DM Mono',monospace; font-size:.78rem; color:var(--accent); letter-spacing:.08em; text-transform:uppercase; }
+  .nav-tabs { display:flex; gap:.25rem; }
+  .nav-tab {
+    padding:.4rem .9rem; border-radius:6px; border:none;
+    background:transparent; color:var(--muted); font-family:inherit; font-size:.82rem;
+    cursor:pointer; transition:all .15s; -webkit-tap-highlight-color:transparent;
+  }
+  .nav-tab:hover { color:var(--text); background:var(--border); }
+  .nav-tab.active { background:var(--accent); color:#fff; }
+
+  /* ─── BOTTOM NAV (mobile only) ─── */
+  .bottom-nav {
+    display: none;
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: rgba(15,15,19,0.97);
+    backdrop-filter: blur(16px);
+    border-top: 1px solid var(--border);
+    z-index: 100;
+    padding: 0 0 env(safe-area-inset-bottom, 0);
+  }
+  .bottom-nav-inner {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    height: 60px;
+  }
+  .bn-tab {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 3px; border: none; background: transparent;
+    color: var(--muted); font-family: inherit; font-size: .6rem;
+    cursor: pointer; transition: color .15s; -webkit-tap-highlight-color: transparent;
+    padding: 0;
+  }
+  .bn-tab .bn-icon { font-size: 1.2rem; line-height: 1; }
+  .bn-tab.active { color: var(--accent); }
+  .bn-tab.active .bn-icon { filter: drop-shadow(0 0 4px rgba(124,106,247,.5)); }
+
+  /* ─── HERO ─── */
+  .hero {
+    padding: 80px 1.25rem 1.5rem;
+    max-width: 900px; margin: 0 auto;
+    text-align: center;
+  }
+  .hero-eyebrow {
+    font-family:'DM Mono',monospace; font-size:.7rem; letter-spacing:.15em;
+    text-transform:uppercase; color:var(--accent); margin-bottom:.75rem;
+  }
+  .hero h1 {
+    font-family:'Lora',serif; font-size:clamp(1.6rem,5vw,3rem);
+    font-weight:600; line-height:1.2; margin-bottom:.6rem;
+  }
+  .hero h1 span { color:var(--accent); font-style:italic; }
+  .hero-sub { color:var(--muted); max-width:520px; margin:0 auto 1.5rem; font-size:.88rem; }
+  .hero-stats { display:flex; gap:.75rem; justify-content:center; flex-wrap:wrap; }
+  .stat-chip {
+    background:var(--card); border:1px solid var(--border);
+    border-radius:8px; padding:.4rem .8rem;
+    font-family:'DM Mono',monospace; font-size:.72rem; color:var(--accent2);
+  }
+
+  /* ─── MAIN LAYOUT ─── */
+  main { max-width: 900px; margin: 0 auto; padding: 1.25rem 1rem; }
+  .section { display:none; }
+  .section.active { display:block; }
+
+  /* ─── LECTURE CARDS ─── */
+  .lecture-grid { display:grid; gap:.75rem; margin-bottom:2rem; }
+  .lecture-card {
+    background:var(--card); border:1px solid var(--border);
+    border-radius:12px; overflow:hidden; cursor:pointer;
+    transition:border-color .2s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .lecture-card:hover { border-color:var(--accent); }
+  .lecture-header {
+    display:flex; align-items:center; gap:.75rem;
+    padding:.9rem 1rem;
+    min-height: 52px; /* better tap target */
+  }
+  .lec-num {
+    font-family:'DM Mono',monospace; font-size:.65rem;
+    color:var(--accent); background:rgba(124,106,247,.12);
+    border:1px solid rgba(124,106,247,.3); border-radius:6px;
+    padding:.2rem .5rem; white-space:nowrap; flex-shrink: 0;
+  }
+  .lec-title { font-size:.9rem; font-weight:600; flex:1; line-height:1.35; }
+  .lec-toggle { color:var(--muted); font-size:1rem; transition:transform .2s; flex-shrink:0; }
+  .lecture-card.open .lec-toggle { transform:rotate(180deg); }
+  .lecture-body { display:none; padding:0 1rem 1rem; }
+  .lecture-card.open .lecture-body { display:block; }
+
+  /* ─── CONCEPT TAGS ─── */
+  .concept-row { display:flex; flex-wrap:wrap; gap:.4rem; margin-bottom:.9rem; }
+  .ctag {
+    font-size:.72rem; padding:.2rem .55rem; border-radius:20px;
+    background:rgba(124,106,247,.12); border:1px solid rgba(124,106,247,.25);
+    color:var(--accent);
+  }
+  .ctag.orange { background:rgba(247,162,106,.12); border-color:rgba(247,162,106,.25); color:var(--accent2); }
+  .ctag.green { background:rgba(79,209,161,.12); border-color:rgba(79,209,161,.25); color:var(--accent3); }
+
+  /* ─── CONTENT BLOCKS ─── */
+  .content-block { margin-bottom:1.1rem; }
+  .block-label {
+    font-family:'DM Mono',monospace; font-size:.62rem; letter-spacing:.1em;
+    text-transform:uppercase; color:var(--muted); margin-bottom:.35rem;
+  }
+  .block-body { font-size:.86rem; color:var(--text); line-height:1.65; }
+  .block-body p { margin-bottom:.45rem; }
+
+  /* ─── KEY TERMS ─── */
+  .terms-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:.55rem; }
+  .term-card {
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:8px; padding:.65rem;
+  }
+  .term-name { font-weight:600; font-size:.83rem; color:var(--accent2); margin-bottom:.2rem; }
+  .term-def { font-size:.76rem; color:var(--muted); line-height:1.5; }
+
+  /* ─── THINKERS ─── */
+  .thinker-row { display:flex; flex-direction:column; gap:.55rem; }
+  .thinker {
+    display:flex; gap:.65rem; align-items:flex-start;
+    background:var(--surface); border-radius:8px; padding:.65rem;
+    border-left:3px solid var(--accent);
+  }
+  .thinker.orange { border-color:var(--accent2); }
+  .thinker.green { border-color:var(--accent3); }
+  .thinker-name { font-weight:600; font-size:.8rem; min-width:120px; color:var(--text); flex-shrink:0; }
+  .thinker-idea { font-size:.77rem; color:var(--muted); }
+
+  /* ─── QUIZ SECTION ─── */
+  .quiz-controls {
+    display:flex; gap:.6rem; align-items:stretch;
+    flex-wrap:wrap; margin-bottom:1.25rem;
+  }
+  .quiz-controls select {
+    flex:1; min-width:0;
+    padding:.6rem .75rem; border-radius:8px; font-family:inherit; font-size:.84rem;
+    border:1px solid var(--border); background:var(--card); color:var(--text);
+    cursor:pointer; appearance:auto;
+  }
+  .quiz-btn-row { display:flex; gap:.5rem; width:100%; }
+  .quiz-btn {
+    flex:1; padding:.7rem .9rem; border-radius:8px; font-family:inherit; font-size:.84rem;
+    border:1px solid var(--border); background:var(--card); color:var(--muted);
+    cursor:pointer; font-weight:600; transition:all .15s;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .quiz-btn.primary { background:var(--accent); border-color:var(--accent); color:#fff; }
+  .quiz-btn.primary:hover { opacity:.9; }
+  .quiz-score-bar {
+    display:flex; gap:.75rem; align-items:center; margin-bottom:1.25rem;
+    background:var(--card); border-radius:8px; padding:.7rem .9rem;
+    border:1px solid var(--border); flex-wrap:wrap;
+  }
+  .score-label { font-family:'DM Mono',monospace; font-size:.68rem; color:var(--muted); }
+  .score-val { font-size:1.1rem; font-weight:700; color:var(--accent3); }
+  .progress-wrap { flex:1; min-width:80px; height:6px; background:var(--border); border-radius:3px; overflow:hidden; }
+  .progress-bar { height:100%; background:var(--accent3); border-radius:3px; transition:width .3s; }
+
+  .q-card {
+    background:var(--quiz-bg); border:1px solid var(--border);
+    border-radius:12px; padding:1rem; margin-bottom:.65rem;
+  }
+  .q-num { font-family:'DM Mono',monospace; font-size:.62rem; color:var(--muted); margin-bottom:.45rem; }
+  .q-text { font-size:.9rem; font-weight:500; margin-bottom:.9rem; line-height:1.5; }
+  .options { display:grid; gap:.4rem; }
+  .opt {
+    padding:.75rem .9rem; border-radius:8px; border:1px solid var(--border);
+    background:var(--card); color:var(--text); font-family:inherit; font-size:.82rem;
+    cursor:pointer; text-align:left; transition:all .15s; line-height:1.4;
+    -webkit-tap-highlight-color:transparent; min-height:44px;
+  }
+  .opt:hover:not(:disabled) { border-color:var(--accent); background:rgba(124,106,247,.08); }
+  .opt.correct { border-color:var(--correct); background:rgba(79,209,161,.1); color:var(--correct); }
+  .opt.wrong { border-color:var(--wrong); background:rgba(247,113,106,.1); color:var(--wrong); }
+  .opt:disabled { cursor:default; }
+  .explanation {
+    display:none; margin-top:.75rem; padding:.7rem; border-radius:8px;
+    background:rgba(124,106,247,.07); border:1px solid rgba(124,106,247,.2);
+    font-size:.8rem; color:var(--muted); line-height:1.55;
+  }
+  .explanation.show { display:block; }
+  .expl-label { font-weight:600; color:var(--accent); margin-bottom:.25rem; }
+
+  /* ─── FLASHCARDS ─── */
+  .flashcard-controls {
+    display:flex; gap:.6rem; align-items:center;
+    flex-wrap:wrap; margin-bottom:1.25rem;
+  }
+  .flashcard-controls select {
+    flex:1; min-width:0;
+    padding:.6rem .75rem; border-radius:8px; font-family:inherit; font-size:.84rem;
+    border:1px solid var(--border); background:var(--card); color:var(--text);
+    cursor:pointer; appearance:auto;
+  }
+  .fc-counter { font-family:'DM Mono',monospace; font-size:.78rem; color:var(--muted); white-space:nowrap; }
+  .flashcard-wrap { perspective:1000px; margin-bottom:1.25rem; }
+  .flashcard {
+    width:100%; min-height:220px; position:relative; cursor:pointer;
+    transform-style:preserve-3d; transition:transform .5s;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .flashcard.flipped { transform:rotateY(180deg); }
+  .fc-face {
+    position:absolute; inset:0; backface-visibility:hidden; -webkit-backface-visibility:hidden;
+    border-radius:16px; display:flex; align-items:center; justify-content:center;
+    padding:1.5rem 1.25rem; text-align:center; flex-direction:column; gap:.7rem;
+  }
+  .fc-front { background:var(--card); border:1px solid var(--border); }
+  .fc-back {
+    background:linear-gradient(135deg,rgba(124,106,247,.15),rgba(247,162,106,.08));
+    border:1px solid rgba(124,106,247,.3);
+    transform:rotateY(180deg);
+  }
+  .fc-hint { font-family:'DM Mono',monospace; font-size:.62rem; color:var(--muted); text-transform:uppercase; letter-spacing:.1em; }
+  .fc-question { font-size:.95rem; font-weight:600; line-height:1.45; }
+  .fc-answer { font-size:.85rem; color:var(--accent2); line-height:1.55; }
+  .fc-nav { display:flex; gap:.6rem; justify-content:center; }
+  .fc-btn {
+    flex:1; max-width:160px;
+    padding:.75rem 1rem; border-radius:8px; border:1px solid var(--border);
+    background:var(--card); color:var(--text); font-family:inherit; font-size:.84rem;
+    cursor:pointer; transition:all .15s; min-height:44px;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .fc-btn:hover { border-color:var(--accent); color:var(--accent); }
+  .fc-btn.primary { background:var(--accent); border-color:var(--accent); color:#fff; }
+
+  /* ─── CHEAT SHEET ─── */
+  .cs-section { margin-bottom:2rem; }
+  .cs-title {
+    font-family:'DM Mono',monospace; font-size:.68rem; letter-spacing:.12em;
+    text-transform:uppercase; color:var(--accent); padding:.4rem 0;
+    border-bottom:1px solid var(--border); margin-bottom:.7rem;
+  }
+  .cs-grid { display:grid; gap:.4rem; }
+  .cs-row {
+    display:grid; grid-template-columns:160px 1fr;
+    gap:.65rem; align-items:start; padding:.5rem 0;
+    border-bottom:1px solid rgba(46,46,62,.5); font-size:.82rem;
+  }
+  .cs-key { color:var(--accent2); font-weight:600; line-height:1.4; }
+  .cs-val { color:var(--muted); }
+  .highlight { color:var(--accent3); font-weight:600; }
+
+  /* ─── SECTION TITLES ─── */
+  .section-title { font-family:'Lora',serif; font-size:1.35rem; margin-bottom:.25rem; }
+  .section-sub { color:var(--muted); font-size:.83rem; margin-bottom:1.25rem; }
+
+  /* ─── DIVIDER ─── */
+  .divider { height:1px; background:var(--border); margin:1.25rem 0; }
+
+  /* ─── MOBILE RESPONSIVE ─── */
+  @media (max-width: 640px) {
+    /* Show bottom nav, hide top tabs */
+    .nav-tabs { display: none; }
+    .bottom-nav { display: block; }
+
+    /* Extra bottom padding so content isn't hidden behind bottom nav */
+    body { padding-bottom: calc(60px + env(safe-area-inset-bottom, 0px)); }
+
+    /* Tighter hero */
+    .hero { padding: 72px 1rem 1.25rem; }
+    .hero h1 { font-size: 1.55rem; }
+    .hero-sub { font-size: .82rem; }
+    .stat-chip { font-size: .68rem; padding: .35rem .65rem; }
+    .hero-stats { gap: .5rem; }
+
+    /* Main padding */
+    main { padding: 1rem .85rem; }
+
+    /* Lecture cards — full-width label above title */
+    .lecture-header { gap: .6rem; padding: .85rem .9rem; }
+    .lec-title { font-size: .85rem; }
+
+    /* Terms: single column on very small screens */
+    .terms-grid { grid-template-columns: 1fr; }
+
+    /* Thinkers: stack name above idea */
+    .thinker { flex-direction: column; gap: .3rem; }
+    .thinker-name { min-width: unset; }
+
+    /* Quiz controls: select full width, buttons side by side */
+    .quiz-controls { gap: .5rem; }
+    .quiz-controls select { width: 100%; }
+    .quiz-btn-row { gap: .4rem; }
+
+    /* Flashcard taller on mobile for readability */
+    .flashcard { min-height: 240px; }
+    .fc-face { padding: 1.25rem 1rem; }
+    .fc-question { font-size: .9rem; }
+    .fc-answer { font-size: .82rem; }
+    .fc-btn { max-width: none; }
+
+    /* Cheat sheet: stack key above value */
+    .cs-row { grid-template-columns: 1fr; gap: .2rem; }
+    .cs-key { font-size: .8rem; }
+    .cs-val { font-size: .78rem; }
+
+    /* Section titles */
+    .section-title { font-size: 1.15rem; }
+  }
+
+  /* ─── DESKTOP refinements ─── */
+  @media (min-width: 641px) {
+    .bottom-nav { display: none !important; }
+    .lecture-card:hover { transform: translateY(-1px); }
+    .hero { padding: 100px 1.5rem 2rem; }
+    main { padding: 1.5rem; }
+    .quiz-controls { align-items: center; }
+    .quiz-btn-row { width: auto; }
+    .quiz-btn { flex: none; padding: .6rem 1.1rem; }
+    .cs-row { grid-template-columns: 180px 1fr; }
+  }
+
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-brand">PEC Reviewer</div>
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="show('review',this)">📖 Review</button>
+    <button class="nav-tab" onclick="show('quiz',this)">🎯 Quiz</button>
+    <button class="nav-tab" onclick="show('flashcards',this)">🃏 Flashcards</button>
+    <button class="nav-tab" onclick="show('cheatsheet',this)">📋 Cheat Sheet</button>
+  </div>
+</nav>
+
+<!-- Mobile bottom navigation -->
+<div class="bottom-nav">
+  <div class="bottom-nav-inner">
+    <button class="bn-tab active" id="bn-review" onclick="show('review',this,'bn')">
+      <span class="bn-icon">📖</span>Review
+    </button>
+    <button class="bn-tab" id="bn-quiz" onclick="show('quiz',this,'bn')">
+      <span class="bn-icon">🎯</span>Quiz
+    </button>
+    <button class="bn-tab" id="bn-flashcards" onclick="show('flashcards',this,'bn')">
+      <span class="bn-icon">🃏</span>Cards
+    </button>
+    <button class="bn-tab" id="bn-cheatsheet" onclick="show('cheatsheet',this,'bn')">
+      <span class="bn-icon">📋</span>Cheat Sheet
+    </button>
+  </div>
+</div>
+
+<div class="hero">
+  <div class="hero-eyebrow">PUP · Broadcast Communication · Finals</div>
+  <h1>Political Economy of <span>Communication</span></h1>
+  <p class="hero-sub">Complete reviewer for PEC</p>
+  <div class="hero-stats">
+    <div class="stat-chip">10 Lectures</div>
+    <div class="stat-chip">50 Quiz Items</div>
+    <div class="stat-chip">60 Flashcards</div>
+    <div class="stat-chip">All Key Theorists</div>
+  </div>
+</div>
+
+<main>
+
+<!-- ====== REVIEW SECTION ====== -->
+<div class="section active" id="sec-review">
+  <div class="section-title">Lecture-by-Lecture Review</div>
+  <p class="section-sub">Click any lecture to expand it. Study the concepts, key thinkers, and Philippine cases.</p>
+  <div class="lecture-grid" id="lectureGrid"></div>
+</div>
+
+<!-- ====== QUIZ SECTION ====== -->
+<div class="section" id="sec-quiz">
+  <div class="section-title">Practice Quiz</div>
+  <p class="section-sub">50 multiple-choice questions from all 10 lectures. Choose a filter and start.</p>
+  <div class="quiz-controls">
+    <select id="quizFilter">
+      <option value="all">All Lectures</option>
+      <option value="0">L1 – What is Political Economy?</option>
+      <option value="1">L2 – Markets & Business Models</option>
+      <option value="2">L3 – Labor, Value & Audiences</option>
+      <option value="3">L4 – New Technology & Practice</option>
+      <option value="4">L5 – Advertising</option>
+      <option value="5">L6 – Publishing</option>
+      <option value="6">L7 – Film & Hollywood</option>
+      <option value="7">L9 – Television & Broadcasting</option>
+      <option value="8">L10 – Video Games</option>
+    </select>
+    <div class="quiz-btn-row">
+      <button class="quiz-btn primary" onclick="startQuiz()">🎯 Start Quiz</button>
+      <button class="quiz-btn" onclick="resetQuiz()">↺ Reset</button>
+    </div>
+  </div>
+  <div class="quiz-score-bar" id="scoreBar" style="display:none">
+    <div>
+
+      <div class="score-label">SCORE</div>
+      <div class="score-val" id="scoreVal">0/0</div>
+    </div>
+    <div>
+      <div class="score-label">QUESTIONS</div>
+      <div class="score-val" id="qCountVal">0</div>
+    </div>
+    <div class="progress-wrap">
+      <div class="progress-bar" id="progressBar" style="width:0%"></div>
+    </div>
+  </div>
+  <div id="quizContainer"></div>
+</div>
+
+<!-- ====== FLASHCARDS SECTION ====== -->
+<div class="section" id="sec-flashcards">
+  <div class="section-title">Flashcards</div>
+  <p class="section-sub">Tap the card to reveal the answer. Navigate with arrows.</p>
+  <div class="flashcard-controls">
+    <select id="fcFilter" onchange="buildFlashcards()">
+      <option value="all">All Topics</option>
+      <option value="0">L1 – Core Concepts</option>
+      <option value="1">L2 – Markets</option>
+      <option value="2">L3 – Labor & Audiences</option>
+      <option value="3">L4 – Technology</option>
+      <option value="4">L5 – Advertising</option>
+      <option value="5">L6 – Publishing</option>
+      <option value="6">L7 – Film</option>
+      <option value="7">L9 – Television</option>
+      <option value="8">L10 – Video Games</option>
+    </select>
+    <span class="fc-counter" id="fcCounter">0 / 0</span>
+  </div>
+  <div class="flashcard-wrap">
+    <div class="flashcard" id="flashcard" onclick="flipCard()">
+      <div class="fc-face fc-front">
+        <div class="fc-hint">Tap to reveal answer ↓</div>
+        <div class="fc-question" id="fcQuestion">Loading...</div>
+      </div>
+      <div class="fc-face fc-back">
+        <div class="fc-hint">Answer</div>
+        <div class="fc-answer" id="fcAnswer"></div>
+      </div>
+    </div>
+  </div>
+  <div class="fc-nav">
+    <button class="fc-btn" onclick="prevCard()">← Prev</button>
+    <button class="fc-btn primary" onclick="nextCard()">Next →</button>
+  </div>
+</div>
+
+<!-- ====== CHEAT SHEET SECTION ====== -->
+<div class="section" id="sec-cheatsheet">
+  <div class="section-title">Master Cheat Sheet</div>
+  <p class="section-sub">Everything you need in one place. Study this the night before.</p>
+  <div id="cheatSheetContent"></div>
+</div>
+
+</main>
+
+<script>
+// ======================================================
+// DATA
+// ======================================================
+
+const lectures = [
+{
+  num:"L1", title:"What is Political Economy of Communication?",
+  tags:["PEC","Garnham","Napoli","Cultural Industries","Dual Markets"],
+  tagColors:["","orange","","","green"],
+  keyIdea:"Political Economy of Communication (PEC) is a critical tradition studying the production, circulation, and consumption of symbolic goods. It focuses on power — ownership, control, labor, regulation, and ideology — rather than just content or texts. It treats media industries as both cultural and economic systems embedded in capitalism.",
+  concepts:[
+    {name:"Political Economy of Communication", def:"Historical materialist analysis of media's cultural sphere. Asks: Who controls media? How is value produced? Who benefits?"},
+    {name:"Dual Markets", def:"Media operates in two markets simultaneously: the audience market (content → consumers) and the advertising market (audiences → advertisers)."},
+    {name:"Cultural Industries", def:"Media produces symbolic/intangible goods. Marginal cost of extra copies is near zero. Distribution becomes central. Demand is unpredictable ('Nobody knows')."},
+    {name:"Natural Monopoly", def:"Communication networks have natural monopoly characteristics requiring state provision or regulation."},
+    {name:"Creative Industries Debate", def:"Culture reframed as economic growth engine. But production costs remain high and demand stays uncertain."},
+    {name:"Information Society", def:"ICTs reshape production, labor, and distribution. Cultural industries now part of wider information capitalism."},
+  ],
+  thinkers:[
+    {name:"Nicholas Garnham", idea:"PEC = analysis of political economy of communication. Argues culture is now part of the broader information economy.", color:""},
+    {name:"Philip Napoli", idea:"Media economics focuses on costs, revenue, market behavior, industrial organization — how content becomes monetized.", color:"orange"},
+  ],
+  ph:[
+    "ABS-CBN franchise shutdown (2020) → structural vulnerability of private media, state-market relations",
+    "GMA vs ABS-CBN ratings wars → advertising-driven model, audience as commodity",
+    "Rise of YouTube/TikTok creators → platform economy, labor precarity",
+    "Philippine film + Netflix/Vivamax → global distribution networks",
+  ]
+},
+{
+  num:"L2", title:"Markets and Business Models",
+  tags:["Albarran","Picard","Meehan","Oligopoly","Blocktiming","Philippine Media"],
+  tagColors:["","orange","","","green","green"],
+  keyIdea:"Media markets are fundamentally different from traditional markets — content is intangible, audiences are products, technology constantly reshapes the landscape. Philippine media is concentrated (oligopolistic), regulated by NTC, and being disrupted by OTT platforms. ABS-CBN's exit caused GMA to gain ~93% free TV market share.",
+  concepts:[
+    {name:"Dual Product Market", def:"Media companies sell TWO things: content to audiences AND audience attention to advertisers. e.g. GMA sells shows to viewers AND ratings to advertisers."},
+    {name:"Audience as Commodity", def:"In media, YOU are also the product. Platforms sell your attention, your data, and your engagement."},
+    {name:"Market Structures", def:"Monopoly (1 firm) → Oligopoly (few large firms) → Monopolistic Competition → Perfect Competition. Most media = oligopolies."},
+    {name:"Hit-Driven Industry", def:"1 blockbuster funds 5 failed films. Media relies on few hits to cover many failures. Success is unpredictable ('overproduction and underconsumption')."},
+    {name:"Value Chain", def:"Content Creation → Production → Distribution → Audience. e.g. Script → Filming → Netflix → Viewers."},
+    {name:"Business Models", def:"Traditional: advertising (TV), tickets (cinema). Digital: subscription (Netflix), ads (YouTube), hybrid (Spotify)."},
+    {name:"Fixed vs Unit Cost", def:"Fixed cost media (broadcasting, streaming): high setup, cheap distribution. Unit cost (books, newspapers): per-copy cost."},
+    {name:"Blocktiming", def:"Independent producers buy airtime from TV networks for their own programs. Smaller producers lack infrastructure; networks monetize unused airtime. NTC regulates: 50% airtime limit, prior approval needed."},
+    {name:"Market Concentration", def:"HHI (Herfindahl-Hirschman Index) and CR4 (Concentration Ratio) measure monopoly power. Higher HHI = more concentrated market."},
+    {name:"Input Foreclosure", def:"Dominant networks can restrict access to airtime, limiting competition and content diversity."},
+  ],
+  thinkers:[
+    {name:"Alan Albarran", idea:"Media economy analysis: how markets evolve, how multi-platform firms operate.", color:""},
+    {name:"Robert Picard", idea:"Media firm economics, business models, value chains. 'All capital comes with conditions.'", color:"orange"},
+    {name:"Eileen Meehan & Paul Torre", idea:"Markets in theory vs. markets in TV — TV markets are shaped by institutions, not just free competition.", color:"green"},
+  ],
+  ph:[
+    "ABS-CBN shutdown → GMA gained ~93% free TV market share, market concentration spike",
+    "Philippine media: predominantly privately/family-owned, some religious-linked",
+    "News/TV = more concentrated; Radio = less concentrated, more diverse voices",
+    "Regulatory bodies: NTC, MTRCB, PCC, ASC, KBP",
+    "Information & Publishing = ~0.25% of GDP but huge social impact",
+  ]
+},
+{
+  num:"L3", title:"Political Economy of Labor, Value & Audiences",
+  tags:["Dallas Smythe","Jenkins","Havens & Lotz","Audience Commodity","GMA Case 2026"],
+  tagColors:["","orange","","green",""],
+  keyIdea:"Dallas Smythe's central insight: the real product of mass media is NOT content, but AUDIENCE POWER — audiences are produced, sold to advertisers, and 'consumed.' Watching TV is unpaid labor. Web 2.0 extends this to digital participation. The 2026 GMA Supreme Court ruling (94 talents = regular employees) illustrates how creative labor in media is exploited.",
+  concepts:[
+    {name:"Audience Commodity (Smythe)", def:"Audiences are the real product of mass media. They are produced (through content), sold (to advertisers), and consumed. Watching ads = unpaid labor = 'audience work.'"},
+    {name:"Free Lunch Concept", def:"Entertainment attracts audiences. But the real economic purpose is advertising. Content is the 'free lunch' that delivers audiences to advertisers."},
+    {name:"Consciousness Industry", def:"Media markets goods, ideology, and reproduces capitalism. Audiences perform 'work' by creating demand for commodities, forming brand loyalties, shaping desire."},
+    {name:"Use Value vs Exchange Value", def:"Use value = practical/cultural utility (what audiences get from media). Exchange value = advertising revenue, ratings, data. Media content = USE VALUE + EXCHANGE VALUE simultaneously."},
+    {name:"Commodification of Culture", def:"Culture → Commodity → Market Value. Cultural experience is converted into something bought and sold."},
+    {name:"Moral Economy of Web 2.0", def:"Jenkins & Green: audiences are now participatory. But their creative participation (fan fiction, memes, UGC) is extracted as FREE LABOR that generates value for platforms without compensation."},
+    {name:"Precarity in Creative Work", def:"Freelance instability, project-based employment, emotional labor, overwork culture. Hierarchies: Producers → Editors → Writers → Technical staff → Freelancers."},
+    {name:"4-Fold Test (Employment)", def:"Court determines employment vs. contractor: Who hired? Who paid? Who controlled the work? Who could dismiss? GMA did all four → workers are employees."},
+  ],
+  thinkers:[
+    {name:"Dallas Smythe", idea:"Audience as commodity. Watching = labor. Media's real product = audience power for advertisers. Traditional view (media produce content) is wrong.", color:""},
+    {name:"Henry Jenkins & Joshua Green", idea:"Moral economy of Web 2.0. Participatory audiences as free labor. Grassroots creativity appropriated by corporations.", color:"orange"},
+    {name:"Havens & Lotz", idea:"Creative labor is structured, not freely creative. Editorial policies, market demands, institutional culture constrain creativity.", color:"green"},
+    {name:"Sharon Willis", idea:"Use value in media commodities: symbolic satisfaction, emotional investment, cultural meaning.", color:""},
+  ],
+  ph:[
+    "GMA Supreme Court ruling (Jan 2026): 94 talents declared regular employees after 11-year battle",
+    "GMA's defense: 'Talent Agreements' = independent contractors. Court: GMA exercised control → they are employees",
+    "Related to 'endo' (end-of-contract) and labor-only contracting debates in PH",
+    "Fan edits of teleseryes, TikTok trends, K-pop fandom = forms of participatory digital labor",
+  ]
+},
+{
+  num:"L4", title:"Political Economy of New Technology & Practice",
+  tags:["Livingstone","Arsenault","iTunes/Apple","Wikipedia","PH Copyright"],
+  tagColors:["","orange","","green",""],
+  keyIdea:"Technology does NOT determine society — social structures mediate technology adoption. Livingstone historicizes audience theory (mass → fragmented → interactive). Arsenault shows corporate power now lies in networks/alliances, not just ownership. Apple/iTunes = platform capitalism via DRM lock-in. Wikipedia = volunteer labor that resists commodification. Philippine copyright: tension between IP protection and public access.",
+  concepts:[
+    {name:"Technological Determinism (Myth)", def:"Myth: technology drives culture/economy on its own. Reality: social structures, class, gender, and labor patterns mediate tech adoption. Technology operates WITHIN capitalist relations."},
+    {name:"Audience as Discursive Construct", def:"The 'audience' is constructed by ratings systems, market research, and advertising discourse — it's as much a tool of industry as a real entity."},
+    {name:"3 Stages of Audience History", def:"1) Mass Broadcasting (aggregate statistical mass, state monopolies, scarce spectrum). 2) Fragmentation (cable, niche markets, neoliberal deregulation). 3) Interactive Turn (user/participant/producer-consumer)."},
+    {name:"Network Political Economy", def:"Arsenault: modern capitalism = network capitalism. Power lies in relationships, alliances, infrastructure control, and interoperability — not just who owns what."},
+    {name:"3 Structural Drivers", def:"Deregulation (e.g. US Fin-Syn repeal), Corporatization (privatization of telecoms), Digitization (media-telecom convergence, sector boundaries disappear)."},
+    {name:"Vertical Integration (Apple)", def:"Apple controlled: production hardware, distribution platform, retail channel, digital file format. One owner, entire supply chain."},
+    {name:"DRM as Market Enclosure", def:"FairPlay DRM locked iTunes files to Apple devices. This is 'digital enclosure' of cultural goods — raises switching costs, prevents interoperability."},
+    {name:"Commodity Fetishism (Apple)", def:"Apple's 'cool' branding masks labor exploitation, global supply chain inequities, and market domination practices."},
+    {name:"Wikipedia & Immaterial Labor", def:"Volunteer editors produce knowledge without wages or authorship credit. Is this a gift economy (commons-based production) or exploitation?"},
+    {name:"Philippine Copyright System", def:"Tension: copyright protection vs. public access. Piracy in PH = social response to economic inequality and restricted information access (not just lawlessness). PH part of Berne Convention, WIPO, TRIPS."},
+  ],
+  thinkers:[
+    {name:"Sonia Livingstone", idea:"Historicizes audience theory. Active audiences ≠ structural freedom. Interpretive freedom is real but audiences can't choose what isn't produced.", color:""},
+    {name:"Amelia Arsenault", idea:"Network political economy. Power embedded in relationships and infrastructure, not just ownership. 3 drivers: deregulation, corporatization, digitization.", color:"orange"},
+    {name:"David Gracon", idea:"iTunes as platform capitalism case study. Apple's vertical integration and DRM = digital enclosure.", color:"green"},
+  ],
+  ph:[
+    "PLDT + global telecom networks = Philippine dependence on networked capitalism",
+    "Philippine copyright: piracy as response to poverty, high media costs, limited legal access",
+    "PH is party to Berne Convention, WIPO, TRIPS → pushed toward stronger IP protection",
+    "Need for stronger fair-use provisions and open-access initiatives locally",
+  ]
+},
+{
+  num:"L5", title:"Political Economy of Advertising in Broadcast Media",
+  tags:["Meyers","Sinclair","Kellner","Santos","Frankfurt School","Commodity Fetishism"],
+  tagColors:["","orange","","green","",""],
+  keyIdea:"Advertising is the ECONOMIC ENGINE of capitalist media — it funds production, links corporations to mass audiences, and produces consumers (not just sells to them). It shapes identity, desire, and ideology. Health commodification (Santos) shows how even the body becomes a market. Key synthesis: advertising = economic structure (Meyers), brand culture (Sinclair), ideology (Kellner).",
+  concepts:[
+    {name:"Sponsorship → Spot Model", def:"Early radio: single sponsor funded entire programs, controlled content. Transitioned to spot advertising: multiple advertisers per show, networks gained programming autonomy, advertising revenue increased."},
+    {name:"Audience Commodity (advertising)", def:"Smythe applied to advertising: advertisers buy attention, time, demographics, and predictable behavior — not programs."},
+    {name:"Nielsen & Ratings", def:"Audience measurement (Nielsen ratings/audimeter, PeopleMeter) creates standardized metrics. Ratings determine advertising price, program survival, network revenue."},
+    {name:"Brand Equity", def:"Brand value exceeds production costs. Components: brand loyalty, name recognition, perceived quality, lifestyle associations, market position."},
+    {name:"Promotional Culture (Wernick)", def:"Society increasingly organized around marketing and promotion. Institutions, individuals, even politicians become brands."},
+    {name:"Brand Capitalism (Naomi Klein)", def:"Corporations outsource production to low-wage regions and focus on brand management. Nike, global fashion brands are examples."},
+    {name:"Commodity Fetishism (branding)", def:"Marx: commodities appear to have value independently of labor. Branding intensifies this — Prada carries 'spiritual value' unrelated to use value."},
+    {name:"Frankfurt School", def:"Adorno, Horkheimer, Marcuse: mass culture integrates individuals into capitalism, produces ideological conformity. Culture Industry = standardized, commercial, ideologically conformist."},
+    {name:"Commodity Self", def:"Individuals construct identity through clothing brands, lifestyle products, consumer goods. Consumption becomes symbolic communication."},
+    {name:"Commodification of Health (Santos)", def:"Health becomes a commodity marketed through media (radio/TV). Biopower (Foucault) + commodification: body treated as object to be optimized through consumption. Creates 'techno-body.'"},
+    {name:"Medicalization", def:"Normal experiences redefined as medical problems, expanding the market for medical products. Body shape, aging, stress treated as disorders."},
+  ],
+  thinkers:[
+    {name:"Cynthia Meyers", idea:"Advertising built broadcasting. Sponsorship → spot model. Agencies were cultural producers that shaped content.", color:""},
+    {name:"John Sinclair", idea:"Branding and culture. Brand capitalism: Naomi Klein's argument that corporations focus on branding, not manufacturing.", color:"orange"},
+    {name:"Douglas Kellner", idea:"Advertising and consumer culture. Frankfurt School critique. Commodity self. Advertising as ideology.", color:"green"},
+    {name:"J.M.C. Santos", idea:"Commodification of health in PH radio/TV. Mosco, Marx, Foucault applied to the body as market.", color:""},
+  ],
+  ph:[
+    "Philippine radio health programs and TV talk shows promote medicalized products",
+    "Advertising creates unrealistic body ideals (slim, young, flawless) targeting Filipino consumers",
+    "Anti-aging, weight-loss, hygiene products exploit health anxiety created by media",
+    "Gender dimension: women → beauty/diet; men → fitness/performance industries",
+  ]
+},
+{
+  num:"L6", title:"Political Economy of Publishing",
+  tags:["Schiller","Meikle","Picard","Libraries","Open Publishing","Newspaper Ownership"],
+  tagColors:["","orange","","green","",""],
+  keyIdea:"Information has been transformed from a public good into a commodity. Libraries face privatization pressures. Open publishing (internet) democratizes media but does not eliminate power — it shifts power to algorithms and platforms. Newspaper ownership form determines editorial content. Key tension: public access vs. commodification.",
+  concepts:[
+    {name:"Commodification of Information", def:"Information produced through public funding becomes controlled by private firms and resold to the public. Access no longer universal — structured by ability to pay."},
+    {name:"Two Levels of Struggle", def:"Inside libraries (free access being reduced by privatization) and outside (corporations controlling data/knowledge infrastructure)."},
+    {name:"Open Publishing", def:"Removes editorial gatekeeping, allows anyone to contribute content. Based on participation over professionalism, collaboration over hierarchy, access over control. Case: Independent Media Center (IMC)."},
+    {name:"Limits of Openness", def:"Without gatekeeping: misinformation, unequal visibility, difficulty establishing credibility. Power shifts from editors to platforms, algorithms, and network effects."},
+    {name:"Forms of Newspaper Ownership", def:"Private individuals/families, public shareholders, non-profit institutions, employees. Each creates different economic pressures and editorial incentives."},
+    {name:"'All Capital Comes with Conditions'", def:"Picard: those who provide funding influence how organizations operate and what decisions are made. Capital is not neutral."},
+    {name:"Theory of the Firm", def:"Media firms organize resources efficiently but shaped by competing interests among owners, managers, and audiences."},
+    {name:"Libraries in Digital Age", def:"Harisanty et al. (2025): Libraries must adapt to digital environment. Risk: becoming spaces where information is sold rather than shared."},
+  ],
+  thinkers:[
+    {name:"H. & A. Schiller", idea:"Libraries and public access to information. Information as public good vs. commodity. Privatization of publicly-funded knowledge.", color:""},
+    {name:"Graham Meikle", idea:"Open publishing and open technologies. Internet democratizes media, but removes gatekeeping creates new problems.", color:"orange"},
+    {name:"Robert Picard & Van Weezel", idea:"Capital and control: different ownership forms → different consequences. All capital comes with conditions.", color:"green"},
+  ],
+  ph:[
+    "Philippine copyright and piracy as issue of public access vs. IP commodification",
+    "Alternative media and citizen journalism in PH = open publishing experiments",
+    "Community newspapers and local media face concentration from major conglomerates",
+  ]
+},
+{
+  num:"L7", title:"Political Economy of Film: Hollywood & Global Cinema",
+  tags:["Wasko","Schatz","Meehan","Synergy","Franchise Logic","Philippine Film"],
+  tagColors:["","orange","","green","",""],
+  keyIdea:"Film is a commodity, not just art. Hollywood uses structural strategies (franchises, synergy, global markets, vertical integration) to manage risk and maximize profit. The 'Big Six' conglomerates (Disney, Time Warner, Sony, News Corp, Viacom, NBC Universal) control production, distribution, and exhibition. Philippine local film faces constraints from Hollywood dominance and streaming platforms.",
+  concepts:[
+    {name:"Film as Commodity", def:"Film = tangible product + intangible service. Requires capital investment, labor, distribution. Success defined by profitability, not meaning."},
+    {name:"Myth of Risk in Hollywood", def:"Studios claim film is risky. Reality: risk is MANAGED through franchises, global markets, and synergy. Only ~1 in 10 films recoup via theatrical. Marketing budgets exceed $80M."},
+    {name:"Finance as Gatekeeper", def:"Strong ties between studios, banks, and investors. Financing determines which stories get told. Finance = gatekeeper of creativity."},
+    {name:"Hollywood's Global Dominance", def:"US government support + early global expansion + strong distribution networks = US film domination. Leads to cultural homogenization and weakening of national cinemas."},
+    {name:"Corporate Synergy", def:"Films generate: sequels, TV shows, merchandise, theme parks, franchises, global brand ecosystems. Film → Franchise → Global brand."},
+    {name:"Vertical & Horizontal Integration", def:"Vertical: production → distribution → exhibition (one owner controls chain). Horizontal: expansion across industries. Creates total control of content circulation."},
+    {name:"Conglomerate Hollywood", def:"Schatz: Hollywood evolved into conglomerate ownership via mergers & acquisitions. The 'Big Six' control film, TV, cable, and more."},
+    {name:"Blockbuster Logic", def:"Studios prioritize high-budget films with global appeal and franchise potential. Goal: billion-dollar returns."},
+    {name:"Hollywood Trilogy/Disney Duo", def:"Meehan: Disney's acquisitions (Pixar, Marvel, Lucasfilm) = extension of conglomerate logic. From studio to multimedia empire."},
+  ],
+  thinkers:[
+    {name:"Janet Wasko", idea:"Film is capitalist commodity. Political economy of film: ownership, financing, distribution, global markets, synergy.", color:""},
+    {name:"Thomas Schatz", idea:"New Hollywood = Conglomerate Hollywood. Big Six. Vertical + horizontal integration. Blockbuster/franchise logic.", color:"orange"},
+    {name:"Eileen Meehan", idea:"Disney's conglomerate power. 'Hollywood Trilogy, Disney Duo' shows franchise capitalism.", color:"green"},
+    {name:"J.P. Telles", idea:"Local film production in Philippine Cordillera: processes, motivations, constraints. Local vs. global.", color:""},
+  ],
+  ph:[
+    "Philippine film vs. Hollywood cultural homogenization",
+    "Vivamax model: local content + streaming platform ownership",
+    "Netflix Philippine content: financed for streaming audiences, platform-driven strategies",
+    "Local film production in Cordillera: constrained by distribution networks, financing gaps",
+  ]
+},
+{
+  num:"L9", title:"Political Economy of Television & Broadcasting",
+  tags:["Meehan","Denise Mann","Janet Murray","Catherine Johnson","Commodity Audience","Brand Management TV","Cyberdrama","Appisation"],
+  tagColors:["","orange","","green","","","",""],
+  keyIdea:"TV is NOT democratic. Ratings measure a commodity audience (advertisers' demand), not viewer preferences. Showrunners = brand managers. TV is evolving into cyberdrama (participatory digital narrative) and App-based platform ecosystems where tech giants control discoverability, data, and content.",
+  concepts:[
+    {name:"Commodity Audience (Meehan)", def:"The TV industry has NO market in which viewers exert demand. Advertisers are the only real customers; viewers are the product. Nielsen ratings measure the 'commodity audience' (18-49 white males in upscale households). 'Ratings have nothing to do with audiences and everything to do with corporate interests.'"},
+    {name:"Corporate Collusion (RCA)", def:"Navy-backed monopoly (GE, Westinghouse, AT&T, RCA) established the 'Free Lunch' model. Programming exists to sell receivers and deliver audiences to advertisers."},
+    {name:"Tyranny of Three Markets", def:"Meehan: 3 markets isolate TV from viewers: (1) Market for Consumers (ads vs. access), (2) Market for Ratings (shared vs. conflicting demand), (3) Market for Programs (capturing the sample)."},
+    {name:"Nielsen Audimeter", def:"Replaced human measurement with 'engineering precision.' Records tuning 24/7. Creates monopoly on measurement. Enabled low-level employees to buy/sell 'by the numbers.'"},
+    {name:"Brand Management TV (Mann)", def:"Showrunners = brand managers (like Ford/Coca-Cola managers). They manage multi-platform blockbusters, ancillary revenue, global brands. 'The show is the mother ship.'"},
+    {name:"Mother Ship Concept", def:"Cuse & Lindelof on Lost: 'The world of Lost is not circumscribed by the show itself.' Transmedia franchise extends to web content, games, ARGs, mobisodes."},
+    {name:"Auteur Myth", def:"Publicity promotes 'singular voice' (J.J. Abrams) but reality is bureaucratic collective authorship — platoons of personnel and interlocking corporations."},
+    {name:"Cyberdrama (Murray)", def:"Digital TV as unified medium reinventing storytelling: hyperserials, fictional neighborhoods, multiple audio tracks, mobile viewer movies, consensus narratives. 'At that point, when the medium melts away into transparency, we will care only about the story.'"},
+    {name:"Appisation of TV (Johnson)", def:"TV now delivered via Apps — siloed, self-contained software. Unlike the open web (hyperlinks), apps package experience inside code. Zittrain: 'Sterile appliances' controlled by manufacturers."},
+    {name:"Big Five Infrastructure", def:"Google, Apple, Microsoft, Amazon, Facebook control the 'rules of the game': datafication, commodification, selection (algorithmic visibility)."},
+    {name:"Economics of Prominence", def:"Discoverability = commercial deals for UI position (not EPG slots). Remote control shortcuts (Netflix button), pre-installation, paid UI placement favor global platforms over local content."},
+  ],
+  thinkers:[
+    {name:"Eileen Meehan", idea:"Don't blame viewers. TV shaped by advertisers, not audiences. Commodity audience. Tyranny of Three Markets.", color:""},
+    {name:"Denise Mann", idea:"Brand Management TV. Lost as case study. Showrunner = brand manager. Auteur myth. '360 media campaigns.'", color:"orange"},
+    {name:"Janet Murray", idea:"Cyberdrama: digital TV as participatory storytelling medium. Hyperserial, fictional neighborhood, mobile viewer, consensus narrative.", color:"green"},
+    {name:"Catherine Johnson", idea:"'Appisation' of television. Platform ecologies, sterile appliances, aggregator apps, economics of prominence.", color:""},
+  ],
+  ph:[
+    "Philippine PSBs struggle to remain discoverable in algorithmic app UIs",
+    "GMA and ABS-CBN streaming (iWantTFC, Kapamilya Online) = Philippine appisation",
+    "ABS-CBN franchise shutdown = illustration of commodity audience model (advertiser power over public service)",
+    "Devil Wears Prada used to illustrate Marxist materialism: base/superstructure, surplus value, alienation, commodity fetishism",
+  ]
+},
+{
+  num:"L10", title:"Political Economy of Video Games",
+  tags:["Aslinger","Nichols","Hardy","Filipino Games","Globalization","Zeebo","NIDL"],
+  tagColors:["","orange","","green","","",""],
+  keyIdea:"Video game industry is a global supply chain where: best jobs (creative) go to wealthy North; hazardous assembly jobs go to Global South. The 'Next Billion' (Zeebo case) shows emerging market gamers were ignored, not absent. Globalization of media = not 'Americanization' but the spread of the commercial model. Traditional Filipino games (laro ng lahi) are declining due to digital cultural hegemony.",
+  concepts:[
+    {name:"Global Market Disparity", def:"~80% of video game hardware sales from just 3 markets: North America, Europe, Japan. BRIC nations (Brazil, Russia, India, China) = 'next billion' market."},
+    {name:"The 'EA Spouse' Problem", def:"Software developers work 80+ hours/week during 'crunch.' Testers avg $27k/year. Typical developer stays in industry only 3 years. Industry = volatile, gendered (92% male in development)."},
+    {name:"Supply Chain Geography", def:"Xbox 360: Casing (Taiwan), Chips (Japan/Korea), Assembly (Southern China), Raw Materials (DR Congo). Outsourced cheapest manufacture → sold to most affluent consumers."},
+    {name:"Labor Inversion", def:"US: $53.69/hr → 6.5 hrs to buy Xbox 360. India: $1.17/hr → 299 hrs. China: $1.06/hr → 330 hrs (over a month of wages)."},
+    {name:"Blood in the Machine", def:"Coltan and Cobalt for electronics often come from DR Congo. High-tech demand fuels violent conflict. Manufacturers claim 'difficulty in tracing.'"},
+    {name:"Zeebo Console", def:"Brazilian/US (Qualcomm+Tectoy) console targeting emerging markets at $199. Used 3G wireless downloads (no discs). Competed with piracy. Empowered local studios. Proved 'everyone has the right to participate in game culture.'"},
+    {name:"Larkin's Thesis", def:"Pirates generate infrastructure when transnational companies fail to create formal networks. Zeebo beat pirates by using 3G."},
+    {name:"Cultural Imperialism", def:"Hardy: Western media is imposed, eroding cultural autonomy and maintaining dependency. Modernization theory calls this 'benign.' Political economists see it as power imbalance."},
+    {name:"NWICO / MacBride", def:"1980: MacBride Commission (UNESCO) called for New World Information Order: guaranteed pluralism, limits on TNCs, no censorship. US/UK left UNESCO in response, favoring 'Free Flow of Information' doctrine."},
+    {name:"News Domination", def:"Masmoudi (1979): 5 Western news agencies controlled 80% of world's news. Only ¼ about developing countries, often with 'false or deformed' images."},
+    {name:"NIDL in Media", def:"New International Division of Cultural Labour: Hollywood (IP ownership, high-end post) → Europe/Canada (tax incentives) → India/Mexico (low cost, cheap skilled labor)."},
+    {name:"Glocalization", def:"Content tailored to local consumers as commercial imperative. e.g., Betty La Fea: Colombian format adapted globally. Not respect for tradition — it's market strategy."},
+    {name:"Traditional Filipino Games", def:"Patintero, luksong tinik, tumbang preso: embedded cultural values, face-to-face interaction, communal identity. 43.34% of youth have shifted exclusively to digital platforms. Urbanization, social media (24.1%), and digital immersion are key drivers."},
+  ],
+  thinkers:[
+    {name:"Ben Aslinger", idea:"Zeebo console: 'right to play' for emerging markets. Rethinking globalization beyond Americanization/Japanization. Larkin's piracy-infrastructure thesis.", color:""},
+    {name:"Randy Nichols", idea:"Who pays, who plays. Global production/consumption inequality. 'EA Spouse' labor crisis. Supply chain geography. Gender in gaming.", color:"orange"},
+    {name:"Jonathan Hardy", idea:"Globalization, transnationalization, cultural imperialism. NWICO/MacBride. NIDL. Herman & McChesney: commercial model = the real imperialism.", color:"green"},
+    {name:"Ignacio et al.", idea:"Traditional Filipino games in digital world. 43.34% shift to digital. AR + gamification as revival strategy.", color:""},
+  ],
+  ph:[
+    "43.34% of Filipino youth shifted exclusively to digital gaming platforms",
+    "62% of parents report kids spend more time on devices than outdoor activities",
+    "Western cultural hegemony + urbanization = decline of laro ng lahi",
+    "Revival strategy: AR integration, gamification, hybrid models preserving traditional games",
+    "Philippine game developers: constrained by access to PSN/Xbox Live due to gatekeeping",
+  ]
+}
+];
+
+// ======================================================
+// QUIZ QUESTIONS
+// ======================================================
+const quizData = [
+// L1 - What is PEC?
+{lec:0, q:"What is the 'Political Economy of Communication'?", opts:["The study of how media texts produce meaning for audiences","A critical tradition studying production, circulation, and consumption of symbolic goods, focusing on power","A branch of journalism theory focused on newsroom practices","A framework for analyzing audience ratings and market share"], correct:1, exp:"PEC is defined as a critical tradition that goes beyond media texts to analyze the structures and systems behind media — power, ownership, control, labor, regulation, and ideology."},
+{lec:0, q:"What does the 'dual market' concept in media mean?", opts:["Media competes in both domestic and international markets","Media companies sell BOTH content to audiences AND audience attention to advertisers","Media operates in both print and digital markets simultaneously","Regulatory bodies and advertisers both fund media companies"], correct:1, exp:"The dual market model: GMA sells shows to viewers (audience market) AND sells audience ratings to advertisers (advertising market). Audiences are BOTH consumers AND products."},
+{lec:0, q:"Why do cultural industries lead to 'overproduction and underconsumption'?", opts:["Cultural products are too expensive for most consumers","Production costs are fixed but demand is uncertain and unpredictable, so studios make more than the market can absorb","Government regulation restricts distribution channels","Cultural goods have high marginal costs per copy"], correct:1, exp:"The marginal cost of extra copies of cultural goods is near zero, but demand is inherently unpredictable ('Nobody knows'). This leads to portfolio strategies where hits fund many failures."},
+{lec:0, q:"What was the significance of the ABS-CBN franchise shutdown (2020) for PEC analysis?", opts:["It proved that public broadcasting is more efficient than private media","It demonstrated the structural vulnerability of private media to state-market political decisions","It led to better media content as competition decreased","It had no significant economic impact on the Philippine media market"], correct:1, exp:"The ABS-CBN shutdown illustrates state-market relations and the regulatory vulnerability of private media. ABS-CBN had to pivot to digital (Kapamilya Online, iWantTFC), demonstrating platform capitalism."},
+{lec:0, q:"According to Garnham, what shift occurred in Political Economy of Communication?", opts:["From focusing on content to focusing on audience","From media industries to the broader information economy","From advertising analysis to ownership analysis","From national media to global media"], correct:1, exp:"Garnham argues the field must expand from media industries to thinking in terms of 'information, information economy, and information society.' Media industries are embedded in capitalism's wider transformation."},
+
+// L2 - Markets
+{lec:1, q:"What makes media markets fundamentally different from traditional markets?", opts:["Media has no regulation or government oversight","Products are intangible, audiences are also the product, and technology constantly changes the market","Media markets are perfectly competitive with many equal sellers","Media companies do not seek profit"], correct:1, exp:"Key differences: content is intangible, the same content can be reused/repackaged (a TV show on TV, YouTube, Netflix, TikTok), and audiences are simultaneously consumers AND products."},
+{lec:1, q:"After ABS-CBN's franchise was not renewed, what happened to the Philippine free TV market?", opts:["New competitors quickly entered the market","GMA gained approximately 93% market share in free TV","TV5 became the dominant broadcaster","OTT platforms collapsed without competition"], correct:1, exp:"ABS-CBN's exit dramatically increased market concentration. GMA gained ~93% of free TV market share, illustrating how political decisions can reshape media markets."},
+{lec:1, q:"What is 'blocktiming' in Philippine free TV?", opts:["A technique to block competitor advertising","Independent producers buying airtime from a TV network to air their own programs","A regulatory rule limiting advertising time","A method for blocking adult content during family hours"], correct:1, exp:"Blocktiming: smaller producers buy airtime from networks. Networks monetize unused slots; small producers gain broadcast access. NTC requires prior approval and limits each party to 50% of airtime."},
+{lec:1, q:"What is 'input foreclosure' in the context of Philippine TV?", opts:["When networks refuse to allow audience measurement systems","When dominant networks restrict competitors' access to airtime, limiting content diversity","When regulators block new channel frequencies","When advertisers refuse to buy spots from smaller networks"], correct:1, exp:"Input foreclosure: dominant networks can restrict access to airtime (the 'input'), limiting competition and content diversity among smaller producers and independent content creators."},
+{lec:1, q:"Most media industries are best described as:", opts:["Perfect competitions with many equal sellers","Monopolies controlled by one entity","Oligopolies dominated by a few large companies","Monopolistic competitions with many similar competitors"], correct:2, exp:"Philippine TV (GMA, TV5, ABS-CBN historically), streaming (Netflix, Disney+, Amazon), and social media (Meta, TikTok, YouTube) are all oligopolies — a few large firms dominate each market."},
+
+// L3 - Labor & Audiences
+{lec:2, q:"According to Dallas Smythe, what is the 'real product' of commercial mass media?", opts:["Entertainment content that informs and educates","Audience power — audiences are produced, sold to advertisers, and consumed","Advertising messages that promote consumer goods","Ideological content that reinforces dominant values"], correct:1, exp:"Smythe's central insight: the real product is NOT content — it is AUDIENCE POWER. Audiences are produced (through content), sold (to advertisers), and consumed. Watching = unpaid labor."},
+{lec:2, q:"What does the 'Free Lunch' concept mean in Smythe's theory?", opts:["Media content is given to audiences at no cost as a public service","Entertainment attracts audiences; content is the 'free lunch' to deliver audiences to advertisers, who are the real customers","Advertisers provide free airtime to media companies in exchange for content","Governments subsidize commercial media to provide free content"], correct:1, exp:"Content is the 'free lunch' — it attracts audiences. But the real economic purpose is advertising. Audiences are NOT just consumers of content; they are the product being delivered to advertisers."},
+{lec:2, q:"The January 2026 Supreme Court ruling on 94 GMA talents is significant because:", opts:["It expanded the definition of creative industries in Philippine law","It declared 94 GMA talents to be regular employees (not independent contractors) after an 11-year battle, applying the 4-fold employment test","It prohibited media companies from using talent agreements entirely","It mandated minimum wages for all broadcast workers in the Philippines"], correct:1, exp:"GMA exercised control over schedules, production requirements, and performance; workers used company equipment and were subject to management direction. The 4-fold test: Who hired? Who paid? Who controlled? Who dismissed? GMA did all four."},
+{lec:2, q:"Jenkins & Green's 'moral economy of Web 2.0' argues that:", opts:["Digital audiences freely choose what content to engage with online","User-generated content, fan edits, and digital participation constitute free labor that generates value for platforms without compensation","Web 2.0 eliminates the audience commodity by giving users control","Digital platforms are more democratically organized than traditional media"], correct:1, exp:"Web 2.0 shifts audiences from passive (broadcast era) to participatory. But grassroots creativity (fan fiction, memes, UGC) is extracted as free labor — corporations appropriate this without compensation."},
+{lec:2, q:"What is 'precarity' in creative labor, as discussed in Lecture 3?", opts:["The creative freedom that media workers enjoy in artistic decisions","Freelance instability, project-based employment, emotional labor, and overwork culture in media industries","The economic uncertainty of advertising-funded media models","The risk that cultural products face in unpredictable markets"], correct:1, exp:"Precarity in creative work: freelance instability, project-based employment, emotional labor, overwork culture. This is structural — not accidental. Media firms organize labor to minimize costs and maximize profit."},
+
+// L4 - Technology
+{lec:3, q:"What is 'technological determinism' and why does Livingstone reject it?", opts:["The correct view that technology shapes society; Livingstone accepts this","The myth that technology drives culture/economy on its own; Livingstone argues social structures, class, gender, and labor patterns mediate tech adoption","The view that society determines which technologies succeed; Livingstone says this is outdated","The belief that media technology is neutral; Livingstone says it has bias"], correct:1, exp:"Technological determinism = myth that technology alone drives change. Reality: social structures mediate technology adoption. Class, gender, labor patterns, and domestic arrangements shape media use. Technology operates WITHIN capitalist relations."},
+{lec:3, q:"Arsenault's 'network political economy' argues that power in modern capitalism lies in:", opts:["Traditional ownership concentration and vertical monopolies","Relationships, alliances, infrastructure control, and interoperability — embedded in networks, not just who owns what","Government regulation and state ownership of media","Audience size and ratings measurement systems"], correct:1, exp:"Arsenault moves beyond 'who owns what?' to ask how networks of corporations produce systemic power. Power = relationships, alliances, and infrastructure. Three drivers: deregulation, corporatization, digitization."},
+{lec:3, q:"Apple's FairPlay DRM system is an example of:", opts:["Government regulation protecting consumer rights in digital markets","Digital enclosure — locking cultural goods to proprietary devices to raise switching costs and prevent interoperability","An open-source approach to distributing digital music","A voluntary industry standard for protecting artist royalties"], correct:1, exp:"FairPlay DRM locked iTunes files to Apple devices, preventing interoperability. This is 'digital enclosure' of cultural goods — a strategy to maintain Apple's ecosystem dominance through technological lock-in."},
+{lec:3, q:"According to the article on Philippine copyright, why does piracy function as a 'social response' in the Philippines?", opts:["Because Filipinos culturally disrespect intellectual property laws","Because piracy emerges from economic inequality, high cost of media goods, and limited legal access — not just lawlessness","Because the government actively encourages piracy to reduce foreign media dependence","Because piracy is the most effective form of cultural resistance to American media imperialism"], correct:1, exp:"The authors argue piracy in PH cannot be explained simply as lawlessness or moral failure. It emerges from economic inequality, high cost of media goods, and limited legal access to content. Piracy = social response to restricted information access."},
+{lec:3, q:"Wikipedia is described as an 'anomaly' because it:", opts:["Earns more revenue per page than any other website","Is a nonprofit using volunteer labor with no ads, yet is embedded in capitalist infrastructure","Is the only media platform not owned by a major corporation","Relies on user subscriptions rather than advertising for revenue"], correct:1, exp:"Unlike Google/Facebook: nonprofit, volunteer labor, no ads. Yet it relies on corporate servers, bandwidth, cloud services. It resists commodification but operates within commodified internet infrastructure. Is volunteer editing exploitation or commons?"},
+
+// L5 - Advertising
+{lec:4, q:"How did the advertising model shift from 'sponsorship' to 'spot advertising'?", opts:["Advertisers demanded longer commercial breaks during programs","Networks began selling short commercial segments instead of entire programs, gaining programming autonomy while multiple advertisers could sponsor a single show","Government regulation forced networks to separate advertising from content","Audiences rejected programs named after sponsoring brands"], correct:1, exp:"Early radio: single sponsor funded entire programs and controlled content. Transition: networks sell 'spots' — multiple advertisers per show, reduced individual sponsor control, greater network programming autonomy, expanded national advertising markets."},
+{lec:4, q:"Naomi Klein's 'brand capitalism' argument claims that:", opts:["Branding is a form of cultural resistance to corporate power","Corporations increasingly focus on brand management rather than manufacturing, outsourcing production to low-wage regions while marketing becomes the core activity","Brands create equal economic relationships between producers and consumers","Government regulation of brands protects consumers from exploitation"], correct:1, exp:"Klein: Nike, global fashion brands. Corporations outsource production to exploit cheap labor and focus on branding/marketing as the high-value activity. Production happens in the Global South; brand value is captured in the North."},
+{lec:4, q:"Santos's concept of 'commodification of health' refers to:", opts:["The privatization of public hospitals in the Philippines","Transforming human health needs into market goods through media advertising, creating the 'techno-body' optimized through consumption","The use of health journalism to raise awareness of public health issues","Government campaigns to promote wellness through media channels"], correct:1, exp:"Health becomes a commodity: media promotes health products, creates body ideals, medicalize normal experiences. Using Mosco (commodification), Marx (use/exchange value), and Foucault (biopower), Santos shows health → market good → consumer product."},
+{lec:4, q:"The Frankfurt School's critique of advertising argues that:", opts:["Advertising is a necessary economic function that funds quality media content","Mass culture and advertising produce ideological conformity, integrating individuals into capitalism and reproducing dominant ideology","Advertising represents consumer freedom of choice in a market economy","Advertising is most problematic only when it targets children"], correct:1, exp:"Adorno, Horkheimer, Marcuse: the Culture Industry produces standardized, commercial content designed for mass audiences. Advertising functions within this system to normalize consumerism and maintain capitalist ideology."},
+{lec:4, q:"The 'commodity self' concept describes:", opts:["The idea that audience members are products being sold to advertisers","How individuals construct identity through consumption of brands and material goods — consumption becomes symbolic communication","The way corporations use celebrities to sell consumer goods","How social media platforms commodify user identities through data collection"], correct:1, exp:"The commodity self: individuals use clothing brands, lifestyle products, and consumer goods to construct and communicate identity. Buying a product = making a statement about who you are. This is Kellner's application of Marx's commodity fetishism to consumer culture."},
+
+// L6 - Publishing
+{lec:5, q:"Schiller's main argument about libraries is that:", opts:["Libraries should modernize to offer digital services to remain relevant","Libraries are not neutral — they are embedded in struggles over information as public good vs. commodity; private firms are privatizing publicly-funded knowledge","Libraries are adequately funded and protected from commercial pressures","Libraries should partner with private companies to improve their collections"], correct:1, exp:"Schiller: libraries were built on democratic access to knowledge. But postwar, information became an economic asset. Private firms now control information produced through public funding and resell it. Information is no longer just shared — it is owned, controlled, monetized."},
+{lec:5, q:"Meikle's 'open publishing' describes a media model where:", opts:["Only accredited journalists and editors control what content is published","Editorial gatekeeping is removed, allowing anyone to contribute content, based on participation over professionalism and access over control","Open publishing requires no technology — anyone can publish on paper","All content must be verified by multiple sources before publication"], correct:1, exp:"Open publishing: IMC model. Removes gatekeeping, allows anyone to publish. Based on participation, collaboration, access. BUT removing gatekeepers introduces: misinformation, unequal visibility, and new power forms (algorithms, network effects)."},
+{lec:5, q:"Picard's argument about newspaper ownership is best summarized as:", opts:["Public ownership is always superior to private ownership for editorial independence","There is no perfect form of media ownership — each model creates different economic pressures and editorial constraints; 'all capital comes with conditions'","Family ownership provides the best editorial independence","Nonprofit ownership guarantees the most democratic media content"], correct:1, exp:"Picard: no ownership form is perfect. Private individuals, public shareholders, nonprofits, employees — each creates different incentives. Capital is not neutral: those who provide funding influence operations and decisions."},
+{lec:5, q:"The 'two levels of struggle' over information access identified by Schiller are:", opts:["National level (governments) and international level (global corporations)","Inside libraries (where free access is reduced by privatization) and outside libraries (where corporations control data and knowledge infrastructure)","Between developed and developing nations over information resources","Between academic institutions and commercial publishers over journal access"], correct:1, exp:"The struggle over information is both institutional (inside libraries, where free access is threatened) and systemic (outside, where corporations control data and knowledge infrastructure). Both levels erode democratic access to information."},
+
+// L7 - Film
+{lec:6, q:"Wasko's 'political economy of film' challenges the view that:", opts:["Film production is too expensive without government subsidies","Film is just art and entertainment; in reality, it is a capitalist commodity shaped by ownership, capital, and market forces","Hollywood is the only global film industry that matters","Film studios operate differently from other capitalist enterprises"], correct:1, exp:"Wasko moves beyond 'film appreciation' to analyze ownership, global distribution, labor, inequalities. Film = commodity. Success = profitability, not meaning. Finance is the gatekeeper of creativity."},
+{lec:6, q:"What is 'corporate synergy' in the context of Hollywood film?", opts:["When competing studios cooperate to reduce production costs","When films generate sequels, TV shows, merchandise, theme parks, and franchise brands — turning a single film into a cross-platform global brand ecosystem","When studios and streaming platforms share production facilities","When studios collaborate with foreign governments for international co-productions"], correct:1, exp:"Corporate synergy: Film → Franchise → Global brand. One film generates multiple revenue streams. Marvel Cinematic Universe is the paradigm example. This is how conglomerates multiply the value of their intellectual property."},
+{lec:6, q:"Schatz describes 'Conglomerate Hollywood' as driven by:", opts:["Independent film movements that challenged studio power","Mergers & acquisitions, global expansion, and digital technologies resulting in a handful of corporations (The Big Six) dominating the entire industry","Government regulation forcing studios to diversify their ownership","International co-productions between Hollywood and foreign studios"], correct:1, exp:"Conglomerate Hollywood: Disney, Time Warner, Sony, News Corp, Viacom, NBC Universal — all emerged from M&A activity. They control film, TV, cable, and more. Vertical integration (production → distribution → exhibition) + horizontal expansion."},
+{lec:6, q:"The 'myth of risk' in Hollywood refers to:", opts:["The mistaken belief that Hollywood films are financially guaranteed successes","Studios claiming film is risky, when in reality risk is structurally managed through franchises, global markets, and synergy — only ~1/10 films recoup via theatrical release","The idea that independent films are more financially viable than studio films","The incorrect view that international markets are too risky for Hollywood expansion"], correct:1, exp:"Studios use 'risk' rhetoric while structurally managing it: franchises (predictable audiences), global markets (distributes risk), synergy (multiple revenue streams). The 'hit-driven' model means 1 blockbuster funds multiple failures."},
+
+// L9 - TV
+{lec:7, q:"Meehan's core argument in 'Don't Blame the Viewers' is:", opts:["Audiences have full control over TV programming through the democratic power of ratings","Ratings have nothing to do with actual audience preferences — they measure a 'commodity audience' (18-49 upscale males) designed to serve advertiser demand, not viewer choice","Audiences should boycott commercial television to force better programming","Streaming platforms have solved the problem of advertiser-controlled television"], correct:1, exp:"Meehan: 'The television industry has no market in which viewers exert demand.' Nielsen measures a COMMODITY AUDIENCE (what advertisers want to buy) — not what viewers actually want to watch. Blame advertisers and the Big Three networks, not viewers."},
+{lec:7, q:"Denise Mann's argument about TV 'brand management' means:", opts:["Advertising agencies control all television programming decisions","Showrunners now function as corporate brand managers — overseeing multi-platform blockbusters, ancillary revenue (games, web content), and global brand empires, not just single shows","TV networks use brand consulting firms to design their programming","Advertisers brand individual TV episodes with product placement"], correct:1, exp:"Showrunners Carlton Cuse and Damon Lindelof describe their role as synonymous with brand managers at Ford or Coca-Cola. 'The show is the mother ship' — the world of Lost extends to web content, ARGs, games, mobisodes."},
+{lec:7, q:"Murray's concept of 'cyberdrama' describes:", opts:["Crime dramas that use computer technology as a plot device","A unified digital medium reinventing storytelling through participatory narratives, hyperserials, multiple audio/video perspectives, and immersive fictional worlds where the medium 'melts away'","Internet-based programming that competes with traditional television","Social media content that tells stories through multiple accounts"], correct:1, exp:"Cyberdrama = digital TV as participatory storytelling: hyperserials (searchable archives), fictional neighborhoods (virtual sets), audio eavesdropping (multiple POV soundtracks), mobile viewer movies (multiple camera angles). 'We will care only about the story.'"},
+{lec:7, q:"Johnson's 'appisation of television' refers to:", opts:["The development of apps that help audiences find TV shows","The transformation of television delivery into app-based platforms that silo users into contained software environments, with tech giants controlling discoverability and data","The creation of television content specifically for mobile app consumption","The acquisition of television networks by technology companies"], correct:1, exp:"TV now delivered via apps — siloed, self-contained. Unlike the open web, apps restrict users to manufacturer-controlled environments. Zittrain: 'sterile appliances.' Big Five (Google, Apple, Microsoft, Amazon, Facebook) control rules of the game."},
+{lec:7, q:"The 'economics of prominence' in TV app ecosystems means:", opts:["Popular content automatically rises to the top through viewer ratings","Discoverability is now determined by commercial deals for UI placement — remote control shortcuts, pre-installation, and paid positions on home screens","Streaming platforms organize content by quality to help viewers find the best shows","Search algorithms objectively measure viewer preferences to determine content prominence"], correct:1, exp:"In app-based TV, being 'easy to find' requires commercial deals with hardware manufacturers and aggregators for UI placement. This disadvantages national/local content apps. International platforms secure prominent spots first — global power bias."},
+
+// L10 - Video Games
+{lec:8, q:"The 'labor inversion' in video game production, as described by Nichols, means:", opts:["Female workers dominate game development while male workers dominate retail","Workers who produce game hardware (in Global South) earn wages so low they cannot afford to buy the products they make, while developers in the Global North earn high wages","Game developers are paid less than retail workers despite creating more value","Indie game developers are replacing major studio employees globally"], correct:1, exp:"Labor inversion: A Chinese assembly worker earns $1.06/hr — needs 330 hours (over a month) to buy one Xbox 360. A US developer earns $53.69/hr — needs 6.5 hours. The people who make hardware can't afford it; the people who design games earn high wages."},
+{lec:8, q:"Aslinger's argument about the Zeebo console is that:", opts:["Zeebo failed because emerging markets don't have sufficient gaming infrastructure","Zeebo proved that Latin American and other emerging market gamers were never 'lost' — they were ignored by the industry, and everyone has the 'right to play'","Zeebo succeeded by copying the PlayStation business model for emerging markets","Zeebo demonstrated that piracy is the only viable model for gaming in the Global South"], correct:1, exp:"Zeebo credits gamers in the South with the assertion that everyone has the right to participate in game culture. Latin American players were never 'lost' — just ignored. Emerging markets = test beds for digital strategies. Larkin: pirates generate infrastructure when companies fail."},
+{lec:8, q:"Hardy's argument about cultural globalization is that the real issue is:", opts:["The spread of American cultural values through media content globally","Not 'Americanization' but the global spread of the commercial model of communication itself — which ignores anything that cannot generate profit","The language barrier that prevents non-English content from reaching global audiences","The technological gap between developed and developing nations in media access"], correct:1, exp:"Herman & McChesney: the commercial model is the real imperialism. Whether content is American, Brazilian, or Korean matters less than whether it serves commercial logic. The NWICO/MacBride report challenged this; US/UK left UNESCO in protest."},
+{lec:8, q:"According to Ignacio et al., what are the main drivers of the shift from traditional Filipino games to digital platforms?", opts:["Government policies that prohibited outdoor games in schools","Widespread device ownership (accessibility), social media diversion (24.1% cite this), digital immersion/reward systems, and urbanization reducing space for outdoor play","The inherent inferiority of traditional games compared to digital alternatives","Parental encouragement of digital games as educational tools"], correct:1, exp:"43.34% of Filipino youth shifted exclusively to digital platforms. Drivers: accessibility (device ownership), social media diversion (24.1%), digital game reward/connectivity systems, urbanization (no open spaces), and parental screen reliance (62% of parents)."},
+{lec:8, q:"The NIDL (New International Division of Cultural Labour) in media means:", opts:["Hollywood hiring actors from developing countries for major film roles","Hollywood retains IP ownership and high-end post-production (centre), Europe/Canada provide tax incentives (intermediate), while India/Mexico provide cheap skilled labor (outlying)","Media companies in developing countries are subsidized by international organizations","The UN controls the distribution of media labor across global regions"], correct:1, exp:"NIDL in media: Centre = Hollywood (IP ownership, creative control, high-end post). Intermediate = Europe/Canada (tax incentives, lower studio costs). Outlying = India/Mexico (cheap but skilled labor). This is the global division of creative and production labor."}
+];
+
+// ======================================================
+// FLASHCARD DATA
+// ======================================================
+const flashcards = [
+{lec:0, q:"What does PEC stand for and what does it study?", a:"Political Economy of Communication — a critical tradition studying the production, circulation, and consumption of symbolic goods, focusing on power, ownership, control, labor, regulation, and ideology."},
+{lec:0, q:"What is the 'dual market' in media?", a:"Media sells content to audiences (audience market) AND sells audience attention to advertisers (advertising market). Media companies operate in BOTH simultaneously."},
+{lec:0, q:"What does 'nobody knows' mean in cultural industries?", a:"Success in cultural markets is inherently uncertain. No one can reliably predict which films, shows, or albums will succeed. This leads to overproduction, risk-spreading, and portfolio strategies."},
+{lec:0, q:"What is the 'natural monopoly' argument in communications?", a:"Communication networks have natural monopoly characteristics and require state provision or regulation because they involve massive infrastructure investment and economies of scale."},
+{lec:0, q:"What are the 5 core concerns of Political Economy?", a:"1) Ownership and concentration 2) Regulation and policy 3) Labor and production 4) Commodification 5) Ideology and power"},
+{lec:1, q:"What is a 'media oligopoly'? Give Philippine examples.", a:"A market dominated by a few large companies. PH examples: GMA, TV5, ABS-CBN (free TV); streaming (Netflix, Disney+, Amazon); social media (Meta, TikTok, YouTube)."},
+{lec:1, q:"What is the media 'value chain'?", a:"Content Creation → Production → Distribution → Audience (e.g., Script → Filming → Netflix → Viewers). Each stage adds value and involves different economic actors."},
+{lec:1, q:"What is 'blocktiming' in PH free TV and who regulates it?", a:"Independent producers buy airtime from TV networks to air their own programs. Regulated by NTC: prior approval required, 50% airtime limit per party."},
+{lec:1, q:"What happened to GMA's market share when ABS-CBN was shut down?", a:"GMA gained approximately 93% market share in Philippine free TV — a dramatic concentration of the market. Demonstrates how political decisions reshape media competition."},
+{lec:1, q:"What are B2C, B2B, and C2C in media markets?", a:"B2C: Netflix subscriptions, cinema tickets (business to consumer). B2B: advertising deals, media partnerships (business to business). C2C: TikTok/YouTube content sharing (consumer to consumer)."},
+{lec:1, q:"What is 'input foreclosure' in media markets?", a:"When dominant networks can restrict competitors' access to airtime (the input), limiting competition and content diversity. A key concern in Philippine free TV."},
+{lec:2, q:"What is Dallas Smythe's 'audience commodity' theory?", a:"The real product of mass media is NOT content — it's AUDIENCE POWER. Audiences are produced (through content), sold (to advertisers), and consumed. Watching TV = unpaid labor."},
+{lec:2, q:"What is the 'Free Lunch' concept?", a:"Entertainment content is the 'free lunch' that attracts audiences to media. But the real economic purpose is advertising — the 'free lunch' exists to deliver audiences to advertisers."},
+{lec:2, q:"What is the 4-fold test for employment in the GMA case?", a:"1) Who hired the worker? 2) Who paid them? 3) Who controlled the work? 4) Who could dismiss them? GMA did all four → the 94 talents are regular employees, not contractors."},
+{lec:2, q:"What is the 'moral economy of Web 2.0' (Jenkins & Green)?", a:"Audiences became participatory in Web 2.0. Their creative labor (fan fiction, UGC, memes) constitutes free labor that generates value for platforms — without compensation to the users."},
+{lec:2, q:"What are the two types of labor analyzed in Lecture 3?", a:"1) Audience labor: unpaid, watching ads generates value for advertisers (Smythe). 2) Creative labor: actual production workers who deserve but are often denied legal protections (GMA case)."},
+{lec:3, q:"What does Livingstone's 3-stage history of the audience include?", a:"1) Mass Broadcasting (aggregate statistical mass, state monopolies, scarce spectrum). 2) Fragmentation (cable, niche, 1990s). 3) Interactive Turn (user/participant/producer-consumer, digital convergence)."},
+{lec:3, q:"What are Arsenault's three structural drivers of network capitalism?", a:"1) Deregulation (US Fin-Syn repeal, GATS). 2) Corporatization (privatization of telecoms, commercial models). 3) Digitization (media-telecom convergence, disappearing sector boundaries)."},
+{lec:3, q:"How did Apple's iTunes demonstrate 'vertical integration'?", a:"Apple controlled: production hardware (Mac), distribution platform (iTunes Store), retail channel, and digital file format — the entire supply chain from creation to consumption under one owner."},
+{lec:3, q:"What is DRM as 'digital enclosure'?", a:"Apple's FairPlay DRM locked purchased files to Apple devices, preventing interoperability. This is 'digital enclosure' — extending proprietary control over cultural goods in the digital sphere."},
+{lec:3, q:"Why does the lecture call the audience a 'discursive construct'?", a:"The 'audience' is as much a creation of ratings systems, market research, and advertising discourse as it is a real entity. Measurement systems PRODUCE the audience as a commodity."},
+{lec:4, q:"What is the early broadcasting 'sponsorship model'?", a:"A single corporate sponsor funded an entire radio program, controlled content and format, and integrated brand promotion directly into programming. Programs often named after the sponsoring brand."},
+{lec:4, q:"What do Nielsen ratings actually measure, according to Meehan?", a:"NOT viewer preferences — they measure the 'commodity audience' (18-49 white males in upscale households) that advertisers want to purchase. Ratings = commodity transaction, not democratic vote."},
+{lec:4, q:"What is 'brand equity'?", a:"The intangible value of a brand: brand loyalty, name recognition, perceived quality, lifestyle associations. Brand value can exceed production costs. Brands function as corporate assets."},
+{lec:4, q:"What is 'promotional culture' (Wernick)?", a:"Society increasingly organized around marketing and promotion. Not just companies — institutions, universities, individuals, and politicians also adopt branding strategies."},
+{lec:4, q:"What is 'commodification of health' (Santos)?", a:"Health needs are transformed into market goods through media advertising. Biopower (Foucault) + commodification: body treated as an object to be optimized through consumption. Creates the 'techno-body.'"},
+{lec:5, q:"What is Schiller's argument about libraries and information?", a:"Libraries were built on democratic access to knowledge. But information produced through public funding is increasingly controlled by private firms and resold to the public. Information = no longer just shared, it's owned."},
+{lec:5, q:"What is Meikle's 'open publishing'?", a:"A model removing editorial gatekeeping where anyone can publish content directly. Based on participation over professionalism, collaboration over hierarchy, access over control. Case study: Independent Media Center (IMC)."},
+{lec:5, q:"What are the 'limits of openness' in open publishing?", a:"Without gatekeepers: misinformation and lack of verification, unequal visibility despite equal access, difficulty establishing credibility. Power doesn't disappear — it shifts to platforms, algorithms, and network effects."},
+{lec:5, q:"What does Picard mean by 'all capital comes with conditions'?", a:"Capital is not neutral. Those who provide funding (private owners, shareholders, nonprofits, employees) influence how media organizations operate and what editorial decisions are made."},
+{lec:6, q:"What is 'corporate synergy' in film?", a:"Films generate multiple revenue streams: sequels, TV shows, merchandise, theme parks, franchise brands. Film → Franchise → Global brand ecosystem. One IP = many profit centers."},
+{lec:6, q:"What are vertical and horizontal integration in Hollywood?", a:"Vertical: one company controls production → distribution → exhibition (entire chain). Horizontal: expansion across different industries (film + TV + cable + streaming). Together = total control of content circulation."},
+{lec:6, q:"Who are 'The Big Six' conglomerates in Hollywood?", a:"Disney, Time Warner, Sony, News Corp (now Fox), Viacom (now Paramount), NBC Universal. These control film, TV, cable, and more through M&A activity."},
+{lec:6, q:"What is the 'blockbuster logic' in Hollywood?", a:"Studios prioritize high-budget films with global appeal and franchise potential, aiming for billion-dollar returns. Risk is managed through franchise reliability and global distribution — not artistic quality."},
+{lec:6, q:"Why is film financing called the 'gatekeeper of creativity'?", a:"Strong ties between studios, banks, and investors determine which films get made and which stories get told. Finance determines creative possibility — not cultural need or artistic vision."},
+{lec:7, q:"What is Meehan's 'commodity audience' theory in TV?", a:"The TV industry has NO market in which viewers exert demand. Advertisers are the ONLY customers. Nielsen ratings measure the commodity audience (18-49 upscale) that advertisers want — not what viewers want. Blame advertisers, not viewers."},
+{lec:7, q:"What is 'brand management TV' (Denise Mann)?", a:"Showrunners (e.g., Cuse & Lindelof of Lost) now function as corporate brand managers, overseeing multi-platform blockbusters and ancillary revenue. 'The show is the mother ship' but the world extends to games, web content, ARGs."},
+{lec:7, q:"What is Murray's 'cyberdrama'?", a:"A unified digital medium reinventing storytelling: hyperserials (searchable archives), fictional neighborhoods (virtual sets), audio eavesdropping (multiple POV soundtracks), mobile viewer movies. Medium 'melts away' → only story remains."},
+{lec:7, q:"What is 'appisation of television' (Johnson)?", a:"TV now delivered via apps — siloed self-contained software. Unlike the open web, apps restrict users to closed ecosystems. Zittrain: 'sterile appliances.' Big Five control rules of the game via datafication, commodification, selection."},
+{lec:7, q:"What is the 'economics of prominence' in TV apps?", a:"Discoverability = commercial deals for UI position (not content quality). Remote control shortcuts, pre-installation, and paid home screen placement favor international platforms over local/national content apps."},
+{lec:7, q:"What is Nielsen's 'Audimeter' and why did it matter?", a:"Replaced human measurement with mechanical 24/7 tuning recording. Created a monopoly on measurement. Enabled routine buy/sell transactions 'by the numbers' without senior intervention. Defined TV as 'radio with pictures.'"},
+{lec:8, q:"What is the 'labor inversion' in video game production?", a:"Hardware manufacturers in Global South earn wages so low they cannot afford the products they make. US developer: $53.69/hr → 6.5 hrs to buy Xbox 360. Chinese worker: $1.06/hr → 330 hrs (over a month of wages)."},
+{lec:8, q:"What was the Zeebo console and what did it prove?", a:"Brazilian/US (Qualcomm+Tectoy) console targeting emerging markets at $199 with 3G wireless. Proved: Latin American gamers were never 'lost' — just ignored. Everyone has the 'right to play.' Pirates generate infrastructure when companies fail."},
+{lec:8, q:"What is the NWICO/MacBride Commission?", a:"1980 UNESCO report calling for New World Information Order: guaranteed pluralism, limits on TNCs, no censorship. US/UK left UNESCO in protest, favoring 'Free Flow of Information' doctrine. Masmoudi: 5 Western agencies controlled 80% of world's news."},
+{lec:8, q:"What is the NIDL (New International Division of Cultural Labour)?", a:"Centre: Hollywood (IP ownership, high-end post). Intermediate: Europe/Canada (tax incentives, lower costs). Outlying: India/Mexico (cheap skilled labor). Global division of creative and production labor in media."},
+{lec:8, q:"What are the key findings on Filipino youth and traditional games (Ignacio et al.)?", a:"43.34% exclusively digital now. Drivers: device accessibility, social media (24.1% cite this), digital reward systems, urbanization (no space), parental screen reliance (62%). Revival strategy: AR integration, gamification, hybrid models."},
+{lec:8, q:"What does Hardy argue is the real form of 'cultural imperialism'?", a:"Not 'Americanization' — the real issue is the global implantation of the COMMERCIAL MODEL of communication. The system ignores anything that cannot generate profit. (Herman & McChesney)"}
+];
+
+// ======================================================
+// STATE
+// ======================================================
+let quizState = { questions:[], answers:{}, started:false };
+let fcState = { cards:[], index:0, flipped:false };
+
+// ======================================================
+// NAVIGATION
+// ======================================================
+function show(tab, clickedEl, navType) {
+  // Hide all sections
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.getElementById('sec-' + tab).classList.add('active');
+
+  // Sync top nav tabs
+  document.querySelectorAll('.nav-tab').forEach(b => b.classList.remove('active'));
+  const tabMap = { review: 0, quiz: 1, flashcards: 2, cheatsheet: 3 };
+  document.querySelectorAll('.nav-tab')[tabMap[tab]].classList.add('active');
+
+  // Sync bottom nav tabs
+  document.querySelectorAll('.bn-tab').forEach(b => b.classList.remove('active'));
+  const bnEl = document.getElementById('bn-' + tab);
+  if (bnEl) bnEl.classList.add('active');
+
+  // Lazy-build sections
+  if (tab === 'cheatsheet' && !document.getElementById('cheatSheetContent').innerHTML) buildCheatSheet();
+  if (tab === 'flashcards') buildFlashcards();
+
+  // Scroll to top of content on mobile
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ======================================================
+// REVIEW SECTION
+// ======================================================
+function buildReview() {
+  const grid = document.getElementById('lectureGrid');
+  grid.innerHTML = lectures.map((l,i)=>`
+    <div class="lecture-card" id="lcard${i}" onclick="toggleLecture(${i})">
+      <div class="lecture-header">
+        <span class="lec-num">${l.num}</span>
+        <span class="lec-title">${l.title}</span>
+        <span class="lec-toggle">▼</span>
+      </div>
+      <div class="lecture-body">
+        <div class="concept-row">${l.tags.map((t,j)=>`<span class="ctag ${l.tagColors[j]||''}">${t}</span>`).join('')}</div>
+        <div class="content-block">
+          <div class="block-label">Key Idea</div>
+          <div class="block-body"><p>${l.keyIdea}</p></div>
+        </div>
+        <div class="content-block">
+          <div class="block-label">Core Concepts</div>
+          <div class="terms-grid">${l.concepts.map(c=>`
+            <div class="term-card">
+              <div class="term-name">${c.name}</div>
+              <div class="term-def">${c.def}</div>
+            </div>`).join('')}</div>
+        </div>
+        <div class="content-block">
+          <div class="block-label">Key Thinkers</div>
+          <div class="thinker-row">${l.thinkers.map(t=>`
+            <div class="thinker ${t.color}">
+              <div class="thinker-name">${t.name}</div>
+              <div class="thinker-idea">${t.idea}</div>
+            </div>`).join('')}</div>
+        </div>
+        <div class="content-block">
+          <div class="block-label">Philippine Cases & Examples</div>
+          <div class="block-body">${l.ph.map(p=>`<p>• ${p}</p>`).join('')}</div>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+function toggleLecture(i) {
+  const card = document.getElementById('lcard'+i);
+  card.classList.toggle('open');
+}
+
+// ======================================================
+// QUIZ SECTION
+// ======================================================
+function startQuiz() {
+  const filter = document.getElementById('quizFilter').value;
+  let pool = filter==='all' ? [...quizData] : quizData.filter(q=>q.lec===parseInt(filter));
+  // Shuffle
+  pool = pool.sort(()=>Math.random()-.5);
+  quizState = { questions: pool, answers:{}, started:true };
+  renderQuiz();
+  document.getElementById('scoreBar').style.display='flex';
+  updateScore();
+}
+
+function resetQuiz() {
+  quizState = { questions:[], answers:{}, started:false };
+  document.getElementById('quizContainer').innerHTML='';
+  document.getElementById('scoreBar').style.display='none';
+}
+
+function renderQuiz() {
+  const container = document.getElementById('quizContainer');
+  container.innerHTML = quizState.questions.map((q,i)=>`
+    <div class="q-card" id="qcard${i}">
+      <div class="q-num">Question ${i+1} of ${quizState.questions.length}</div>
+      <div class="q-text">${q.q}</div>
+      <div class="options">
+        ${q.opts.map((o,j)=>`<button class="opt" id="opt${i}_${j}" onclick="answer(${i},${j})">${String.fromCharCode(65+j)}. ${o}</button>`).join('')}
+      </div>
+      <div class="explanation" id="exp${i}">
+        <div class="expl-label">💡 Explanation</div>
+        ${q.exp}
+      </div>
+    </div>`).join('');
+}
+
+function answer(qi, ai) {
+  if(quizState.answers[qi] !== undefined) return;
+  quizState.answers[qi] = ai;
+  const q = quizState.questions[qi];
+  const correct = q.correct;
+  for(let j=0;j<q.opts.length;j++){
+    const btn = document.getElementById(`opt${qi}_${j}`);
+    btn.disabled = true;
+    if(j===correct) btn.classList.add('correct');
+    else if(j===ai && ai!==correct) btn.classList.add('wrong');
+  }
+  document.getElementById(`exp${qi}`).classList.add('show');
+  updateScore();
+}
+
+function updateScore() {
+  const total = quizState.questions.length;
+  const answered = Object.keys(quizState.answers).length;
+  const correct = Object.entries(quizState.answers).filter(([qi,ai])=>quizState.questions[parseInt(qi)].correct===ai).length;
+  document.getElementById('scoreVal').textContent = `${correct}/${answered}`;
+  document.getElementById('qCountVal').textContent = `${answered}/${total}`;
+  document.getElementById('progressBar').style.width = total ? `${(answered/total)*100}%`:'0%';
+}
+
+// ======================================================
+// FLASHCARDS
+// ======================================================
+function buildFlashcards() {
+  const filter = document.getElementById('fcFilter').value;
+  let pool = filter==='all' ? [...flashcards] : flashcards.filter(f=>f.lec===parseInt(filter));
+  pool = pool.sort(()=>Math.random()-.5);
+  fcState = { cards:pool, index:0, flipped:false };
+  showCard();
+}
+
+function showCard() {
+  if(!fcState.cards.length) return;
+  const card = fcState.cards[fcState.index];
+  document.getElementById('fcQuestion').textContent = card.q;
+  document.getElementById('fcAnswer').textContent = card.a;
+  document.getElementById('fcCounter').textContent = `${fcState.index+1} / ${fcState.cards.length}`;
+  const el = document.getElementById('flashcard');
+  el.classList.remove('flipped');
+  fcState.flipped = false;
+}
+
+function flipCard() {
+  const el = document.getElementById('flashcard');
+  fcState.flipped = !fcState.flipped;
+  el.classList.toggle('flipped', fcState.flipped);
+}
+
+function nextCard() {
+  if(fcState.index < fcState.cards.length-1) {
+    fcState.index++;
+    showCard();
+  }
+}
+
+function prevCard() {
+  if(fcState.index > 0) {
+    fcState.index--;
+    showCard();
+  }
+}
+
+// ======================================================
+// CHEAT SHEET
+// ======================================================
+function buildCheatSheet() {
+  const content = document.getElementById('cheatSheetContent');
+  content.innerHTML = `
+  <div class="cs-section">
+    <div class="cs-title">🧠 Master Theorist Map</div>
+    <div class="cs-grid">
+      <div class="cs-row"><div class="cs-key">Dallas Smythe</div><div class="cs-val">Audience Commodity theory. Real product of media = audience power. Watching = unpaid labor. Free Lunch concept.</div></div>
+      <div class="cs-row"><div class="cs-key">Nicholas Garnham</div><div class="cs-val">PEC revised. Media → information economy. Historical materialist analysis. Cultural sphere embedded in capitalism.</div></div>
+      <div class="cs-row"><div class="cs-key">Philip Napoli</div><div class="cs-val">Media economics: costs, revenue, market behavior, industrial organization. How content is monetized.</div></div>
+      <div class="cs-row"><div class="cs-key">Sonia Livingstone</div><div class="cs-val">3 stages: mass → fragmented → interactive audience. Myth of technological determinism. Interpretive ≠ structural freedom.</div></div>
+      <div class="cs-row"><div class="cs-key">Amelia Arsenault</div><div class="cs-val">Network political economy. Power = relationships, alliances, infrastructure. 3 drivers: deregulation, corporatization, digitization.</div></div>
+      <div class="cs-row"><div class="cs-key">Henry Jenkins & Green</div><div class="cs-val">Moral economy of Web 2.0. Participatory audiences = free labor. Grassroots creativity appropriated by corporations.</div></div>
+      <div class="cs-row"><div class="cs-key">Eileen Meehan (TV)</div><div class="cs-val">Don't blame viewers. Ratings = commodity audience for advertisers. Tyranny of 3 markets. 'Ratings have nothing to do with audiences.'</div></div>
+      <div class="cs-row"><div class="cs-key">Denise Mann</div><div class="cs-val">Brand management TV. Showrunner = brand manager. Mother ship concept. Auteur myth. 360 media campaigns.</div></div>
+      <div class="cs-row"><div class="cs-key">Janet Murray</div><div class="cs-val">Cyberdrama: hyperserials, fictional neighborhoods, multiple audio tracks. Medium melts into story.</div></div>
+      <div class="cs-row"><div class="cs-key">Catherine Johnson</div><div class="cs-val">Appisation of TV. Sterile appliances (Zittrain). Big Five control rules. Economics of prominence.</div></div>
+      <div class="cs-row"><div class="cs-key">Janet Wasko</div><div class="cs-val">Film = capitalist commodity. Finance = gatekeeper of creativity. Hollywood dominance, synergy, global markets.</div></div>
+      <div class="cs-row"><div class="cs-key">Thomas Schatz</div><div class="cs-val">Conglomerate Hollywood. Big Six (Disney, Time Warner, Sony, News Corp, Viacom, NBC Universal). Blockbuster logic.</div></div>
+      <div class="cs-row"><div class="cs-key">H. & A. Schiller</div><div class="cs-val">Libraries: public good vs commodity. Information privatized. Knowledge = economic asset. Two levels of struggle.</div></div>
+      <div class="cs-row"><div class="cs-key">Graham Meikle</div><div class="cs-val">Open publishing: removes gatekeeping. IMC case. Limits: misinformation, power shifts to algorithms.</div></div>
+      <div class="cs-row"><div class="cs-key">Robert Picard</div><div class="cs-val">Newspaper ownership forms. 'All capital comes with conditions.' No perfect ownership model.</div></div>
+      <div class="cs-row"><div class="cs-key">Cynthia Meyers</div><div class="cs-val">Sponsorship → spot advertising. Agencies as cultural producers. Economic engine of broadcasting.</div></div>
+      <div class="cs-row"><div class="cs-key">John Sinclair</div><div class="cs-val">Branding and culture. Brand equity, promotional culture (Wernick), brand capitalism (Klein).</div></div>
+      <div class="cs-row"><div class="cs-key">Douglas Kellner</div><div class="cs-val">Advertising and consumer culture. Frankfurt School. Commodity self. Advertising as ideology.</div></div>
+      <div class="cs-row"><div class="cs-key">J.M.C. Santos</div><div class="cs-val">Commodification of health in PH radio/TV. Techno-body. Mosco + Marx + Foucault applied to health.</div></div>
+      <div class="cs-row"><div class="cs-key">Ben Aslinger</div><div class="cs-val">Zeebo console: right to play, emerging markets. Larkin's piracy-infrastructure thesis. Rethinking globalization.</div></div>
+      <div class="cs-row"><div class="cs-key">Randy Nichols</div><div class="cs-val">Who pays, who plays. Labor inversion. Supply chain geography. EA Spouse problem. Gender in gaming.</div></div>
+      <div class="cs-row"><div class="cs-key">Jonathan Hardy</div><div class="cs-val">Globalization ≠ Americanization. Commercial model = real imperialism. NWICO/MacBride. NIDL in media.</div></div>
+      <div class="cs-row"><div class="cs-key">Ignacio, Manumbali & Donato</div><div class="cs-val">Traditional Filipino games decline. 43.34% shift to digital. Revival: AR, gamification, hybrid models.</div></div>
+      <div class="cs-row"><div class="cs-key">Havens & Lotz</div><div class="cs-val">Creative labor is structured, not free. Editorial policies, market demands, institutional culture constrain creativity.</div></div>
+    </div>
+  </div>
+
+  <div class="cs-section">
+    <div class="cs-title">📌 Key Concepts Quick Reference</div>
+    <div class="cs-grid">
+      <div class="cs-row"><div class="cs-key">Audience Commodity</div><div class="cs-val">Audiences are produced (content), sold (to advertisers), consumed. Watching = unpaid labor.</div></div>
+      <div class="cs-row"><div class="cs-key">Dual Market</div><div class="cs-val">Media sells content to audiences AND audience attention to advertisers. Two markets simultaneously.</div></div>
+      <div class="cs-row"><div class="cs-key">Commodification</div><div class="cs-val">Transforming cultural/human needs into market goods with exchange value. Culture → commodity.</div></div>
+      <div class="cs-row"><div class="cs-key">Commodity Fetishism</div><div class="cs-val">Marx: commodities appear to have value independently of labor. Branding/Prada/Apple intensify this.</div></div>
+      <div class="cs-row"><div class="cs-key">Vertical Integration</div><div class="cs-val">One owner controls the entire chain: production → distribution → exhibition. Total supply chain control.</div></div>
+      <div class="cs-row"><div class="cs-key">Horizontal Integration</div><div class="cs-val">Expansion ACROSS different industries (film + TV + cable + streaming + theme parks).</div></div>
+      <div class="cs-row"><div class="cs-key">Corporate Synergy</div><div class="cs-val">One IP generates multiple revenue streams (film → merch → theme park → game → TV show).</div></div>
+      <div class="cs-row"><div class="cs-key">Precarity</div><div class="cs-val">Unstable, project-based, underpaid creative labor. Freelance instability, emotional labor, overwork.</div></div>
+      <div class="cs-row"><div class="cs-key">Natural Monopoly</div><div class="cs-val">Networks have natural monopoly characteristics requiring state regulation (broadcasting, telecom).</div></div>
+      <div class="cs-row"><div class="cs-key">Cultural Imperialism</div><div class="cs-val">Western media imposed on developing nations, eroding cultural autonomy. Hardy: real issue = commercial model.</div></div>
+      <div class="cs-row"><div class="cs-key">NIDL</div><div class="cs-val">New International Division of Cultural Labour: Hollywood (IP) → Europe/Canada (tax) → India/Mexico (cheap labor).</div></div>
+      <div class="cs-row"><div class="cs-key">Glocalization</div><div class="cs-val">Content tailored to local markets as commercial strategy. Betty La Fea = global format, local execution.</div></div>
+      <div class="cs-row"><div class="cs-key">Digital Enclosure</div><div class="cs-val">DRM/proprietary systems lock cultural goods to specific platforms/devices. Apple FairPlay = example.</div></div>
+      <div class="cs-row"><div class="cs-key">Immaterial Labor</div><div class="cs-val">Wikipedia volunteers: knowledge production without wages. Is this commons or exploitation?</div></div>
+      <div class="cs-row"><div class="cs-key">Cyberdrama</div><div class="cs-val">Murray: digital TV as unified participatory medium. Hyperserial, multiple POVs, medium melts into story.</div></div>
+      <div class="cs-row"><div class="cs-key">Appisation of TV</div><div class="cs-val">Johnson: TV delivered via siloed apps; tech giants control discoverability and data through sterile appliances.</div></div>
+      <div class="cs-row"><div class="cs-key">Brand Management TV</div><div class="cs-val">Showrunners = brand managers. Show is 'mother ship.' 360 media campaigns, transmedia franchise logic.</div></div>
+      <div class="cs-row"><div class="cs-key">Blocktiming</div><div class="cs-val">Independent PH producers buy airtime from networks. NTC: prior approval + 50% airtime limit.</div></div>
+      <div class="cs-row"><div class="cs-key">Tyranny of 3 Markets</div><div class="cs-val">Meehan: Market for Consumers, Market for Ratings, Market for Programs — isolate TV from actual viewers.</div></div>
+      <div class="cs-row"><div class="cs-key">4-Fold Test</div><div class="cs-val">PH employment test: Who hired? Who paid? Who controlled work? Who dismissed? GMA did all 4 → employees.</div></div>
+    </div>
+  </div>
+
+  <div class="cs-section">
+    <div class="cs-title">🇵🇭 Philippine Cases You Must Know</div>
+    <div class="cs-grid">
+      <div class="cs-row"><div class="cs-key">ABS-CBN Shutdown (2020)</div><div class="cs-val">L1 + L2. Structural vulnerability of private media. State-market relations. GMA → 93% free TV market share. Shifted to digital (Kapamilya Online, iWantTFC).</div></div>
+      <div class="cs-row"><div class="cs-key">GMA Supreme Court (Jan 2026)</div><div class="cs-val">L3. 94 talents = regular employees (not contractors). 11-year battle. 4-fold test. Labor rights in creative industries. Relates to 'endo' debate.</div></div>
+      <div class="cs-row"><div class="cs-key">PH Media Concentration</div><div class="cs-val">L2. News/TV = more concentrated (CR4, HHI). Radio = less concentrated. Family/private ownership dominant. ~0.25% of GDP.</div></div>
+      <div class="cs-row"><div class="cs-key">PH Copyright System</div><div class="cs-val">L4. Colonial/US-influenced. Party to Berne, WIPO, TRIPS. Piracy as social response to poverty. Need for fair-use + open access reform.</div></div>
+      <div class="cs-row"><div class="cs-key">Philippine Film & Streaming</div><div class="cs-val">L7. Vivamax local content + OTT ownership. Netflix PH = platform-driven strategies. Local Cordillera film = distribution constraints.</div></div>
+      <div class="cs-row"><div class="cs-key">Digital Creator Economy</div><div class="cs-val">L1 + L3. YouTube/TikTok PH creators. Bypass networks but depend on algorithms. Monetization = platform rules. New precarious labor conditions.</div></div>
+      <div class="cs-row"><div class="cs-key">Health Commodification in PH</div><div class="cs-val">L5. Santos. Radio/TV health programs market wellness products. Unrealistic body ideals. Gendered targeting of consumers.</div></div>
+      <div class="cs-row"><div class="cs-key">Traditional Filipino Games</div><div class="cs-val">L10. Ignacio et al. Patintero, luksong tinik, tumbang preso. 43.34% Filipino youth shifted exclusively to digital. Revival: AR + gamification + hybrid models.</div></div>
+      <div class="cs-row"><div class="cs-key">PH Internet Inequality</div><div class="cs-val">L2. Many Filipinos outside NCR lack fixed broadband. Digital growth is uneven across regions. Market inequality issue.</div></div>
+      <div class="cs-row"><div class="cs-key">OFW Digital Audiences</div><div class="cs-val">L4. Filipino diaspora as segmented digital audiences. ABS-CBN's TFC (The Filipino Channel) served this market globally.</div></div>
+    </div>
+  </div>
+
+  <div class="cs-section">
+    <div class="cs-title">📚 Lecture Summary in One Line Each</div>
+    <div class="cs-grid">
+      <div class="cs-row"><div class="cs-key highlight">L1</div><div class="cs-val">PEC = critical study of media as economic AND political system; dual markets, advertising engine, information society.</div></div>
+      <div class="cs-row"><div class="cs-key highlight">L2</div><div class="cs-val">Media markets are oligopolistic, intangible, and dual-product; Philippine free TV is concentrated and regulated by NTC.</div></div>
+      <div class="cs-row"><div class="cs-key highlight">L3</div><div class="cs-val">Audiences are unpaid laborers (Smythe); digital participation = free labor (Jenkins); GMA workers won regular employment status after 11 years.</div></div>
+      <div class="cs-row"><div class="cs-key highlight">L4</div><div class="cs-val">Tech doesn't determine society; audiences shifted mass→fragmented→interactive; Apple/iTunes = DRM enclosure; Wikipedia = contested commons.</div></div>
+      <div class="cs-row"><div class="cs-key highlight">L5</div><div class="cs-val">Advertising is the capitalist engine of media; branding shapes identity and culture; health is commodified through media.</div></div>
+      <div class="cs-row"><div class="cs-key highlight">L6</div><div class="cs-val">Information was a public good now commodified; open publishing shifts power to algorithms; no perfect media ownership model.</div></div>
+      <div class="cs-row"><div class="cs-key highlight">L7</div><div class="cs-val">Film = commodity; Hollywood manages risk through franchises and synergy; The Big Six control global film via vertical+horizontal integration.</div></div>
+      <div class="cs-row"><div class="cs-key highlight">L9</div><div class="cs-val">TV ratings serve advertisers not viewers (Meehan); showrunners are brand managers (Mann); TV is becoming cyberdrama (Murray) and apps (Johnson).</div></div>
+      <div class="cs-row"><div class="cs-key highlight">L10</div><div class="cs-val">Video game labor is globally exploitative; Zeebo proved the 'right to play'; cultural imperialism = spread of commercial model; Filipino laro ng lahi declining.</div></div>
+    </div>
+  </div>`;
+}
+
+// ======================================================
+// INIT
+// ======================================================
+buildReview();
+buildFlashcards();
+</script>
+</body>
+</html>
